@@ -19,11 +19,11 @@ public final class PowerRenderer
     private static final float TAU = (float) (Math.PI * 2.0);
 
     /* per-frame draw state */
-    private static Matrix4f m;
-    private static Vector3f camRight = new Vector3f();
-    private static Vector3f camUp = new Vector3f();
-    private static float cr, cg, cb, er, eg, eb;   // core / edge colors
-    private static float gain;                      // brightness * envelope
+    static Matrix4f m;
+    static Vector3f camRight = new Vector3f();
+    static Vector3f camUp = new Vector3f();
+    static float cr, cg, cb, er, eg, eb;   // core / edge colors
+    static float gain;                      // brightness * envelope
 
     private PowerRenderer() {}
 
@@ -32,19 +32,19 @@ public final class PowerRenderer
         FilmEvents.RENDER_AFTER.register(PowerRenderer::render);
     }
 
-    private static float hash(float x)
+    static float hash(float x)
     {
         float s = (float) Math.sin(x * 127.1F + 311.7F) * 43758.5453F;
 
         return s - (float) Math.floor(s);
     }
 
-    private static float fract(float x)
+    static float fract(float x)
     {
         return x - (float) Math.floor(x);
     }
 
-    private static void unpack(int rgb, float[] out)
+    static void unpack(int rgb, float[] out)
     {
         out[0] = ((rgb >> 16) & 255) / 255F;
         out[1] = ((rgb >> 8) & 255) / 255F;
@@ -158,14 +158,14 @@ public final class PowerRenderer
 
     /* ------------------------------------------------------------ primitives */
 
-    private static void vert(float x, float y, float z, float t, float a)
+    static void vert(float x, float y, float z, float t, float a)
     {
         /* t: 0 = core color, 1 = edge color */
         Gfx.v(m, x, y, z, cr + (er - cr) * t, cg + (eg - cg) * t, cb + (eb - cb) * t, a * gain);
     }
 
     /** camera facing soft glow disc */
-    private static void glow(float x, float y, float z, float size, float t, float alpha)
+    static void glow(float x, float y, float z, float size, float t, float alpha)
     {
         int n = 14;
 

@@ -17,12 +17,15 @@ public class ImpactAddon implements BBSAddonMod
     public static final Link POWER_ID = new Link("impactfx", "power_fx");
     public static final String IMPACT_LABEL = "ALI impact vfx";
     public static final String POWER_LABEL = "ALI power fx";
+    public static final Link SLASH_ID = new Link("impactfx", "slash_fx");
+    public static final String SLASH_LABEL = "ALI slash fx";
 
     @Subscribe
     public void registerClips(RegisterCameraClipsEvent event)
     {
         event.factory.register(ID, ImpactClip.class, new ClipFactoryData(Icons.FIVE_STAR, 0xFFD23C));
         event.factory.register(POWER_ID, PowerClip.class, new ClipFactoryData(Icons.LIGHT, 0x9C6CFF));
+        event.factory.register(SLASH_ID, SlashClip.class, new ClipFactoryData(Icons.SHAPES, 0x4FC3F7));
     }
 
     @Subscribe
@@ -30,6 +33,7 @@ public class ImpactAddon implements BBSAddonMod
     {
         event.register(ImpactClip.class, new UILabelRenderer<ImpactClip>(IMPACT_LABEL));
         event.register(PowerClip.class, new UILabelRenderer<PowerClip>(POWER_LABEL));
+        event.register(SlashClip.class, new UILabelRenderer<SlashClip>(SLASH_LABEL));
     }
 
     @Subscribe
@@ -37,6 +41,7 @@ public class ImpactAddon implements BBSAddonMod
     {
         event.register(ImpactClip.class, UIImpactClip::new);
         event.register(PowerClip.class, UIPowerClip::new);
+        event.register(SlashClip.class, UISlashClip::new);
     }
 
 
