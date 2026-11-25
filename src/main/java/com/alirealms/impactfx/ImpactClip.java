@@ -69,7 +69,7 @@ public class ImpactClip extends CameraClip
         this.add(this.centerX);
         this.add(this.centerY);
 
-        this.title.set(UIImpactClipRenderer.LABEL);
+        this.title.set(ImpactAddon.IMPACT_LABEL);
         this.duration.set(10);
         Presets.apply(this, 0);
     }

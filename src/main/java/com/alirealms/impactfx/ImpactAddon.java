@@ -14,23 +14,29 @@ import mchorse.bbs_mod.ui.utils.icons.Icons;
 public class ImpactAddon implements BBSAddonMod
 {
     public static final Link ID = new Link("impactfx", "impact_frame");
+    public static final Link POWER_ID = new Link("impactfx", "power_fx");
+    public static final String IMPACT_LABEL = "ALI impact vfx";
+    public static final String POWER_LABEL = "ALI power fx";
 
     @Subscribe
     public void registerClips(RegisterCameraClipsEvent event)
     {
         event.factory.register(ID, ImpactClip.class, new ClipFactoryData(Icons.FIVE_STAR, 0xFFD23C));
+        event.factory.register(POWER_ID, PowerClip.class, new ClipFactoryData(Icons.LIGHT, 0x9C6CFF));
     }
 
     @Subscribe
     public void registerRenderers(RegisterClipRenderersEvent event)
     {
-        event.register(ImpactClip.class, new UIImpactClipRenderer());
+        event.register(ImpactClip.class, new UILabelRenderer<ImpactClip>(IMPACT_LABEL));
+        event.register(PowerClip.class, new UILabelRenderer<PowerClip>(POWER_LABEL));
     }
 
     @Subscribe
     public void registerPanels(RegisterClipPanelsEvent event)
     {
         event.register(ImpactClip.class, UIImpactClip::new);
+        event.register(PowerClip.class, UIPowerClip::new);
     }
 
 
