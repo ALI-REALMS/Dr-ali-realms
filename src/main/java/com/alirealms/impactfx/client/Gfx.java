@@ -2,7 +2,6 @@ package com.alirealms.impactfx.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.GameRenderer;
@@ -13,7 +12,7 @@ import org.joml.Matrix4f;
 
 /**
  * Tiny drawing layer. This is the ONLY file that differs between Minecraft versions
- * (1.21.1 here, 1.20.1 on the other branch).
+ * (1.20.1 here, 1.21.1 on the other branch).
  */
 final class Gfx
 {
@@ -23,7 +22,7 @@ final class Gfx
 
     static float partial(WorldRenderContext context)
     {
-        return MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(false);
+        return context.tickDelta();
     }
 
     /** additive glow state */
@@ -47,12 +46,13 @@ final class Gfx
 
     static void begin()
     {
-        buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buffer = Tessellator.getInstance().getBuffer();
+        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
     }
 
     static void v(Matrix4f m, float x, float y, float z, float r, float g, float b, float a)
     {
-        buffer.vertex(m, x, y, z).color(clamp(r), clamp(g), clamp(b), clamp(a));
+        buffer.vertex(m, x, y, z).color(clamp(r), clamp(g), clamp(b), clamp(a)).next();
     }
 
     static void end()
