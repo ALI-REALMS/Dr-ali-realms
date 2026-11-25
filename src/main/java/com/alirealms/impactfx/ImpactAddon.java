@@ -27,15 +27,18 @@ public class ImpactAddon implements BBSAddonMod
     }
 
 
+
 @Subscribe
 public void registerLang(RegisterL10nEvent event)
 {
-    event.l10n.register((lang) ->
-        java.util.List.of(
-            new Link("impactfx", "strings/" + lang + ".json")
-        )
+    MapType map = new MapType();
+
+    map.putString(
+        "bbs.ui.camera.clips." + ID.toString(),
+        "ALI Impact FX"
     );
 
-    event.l10n.reload();
+    event.l10n.overwrite(map);
 }
+
 }
