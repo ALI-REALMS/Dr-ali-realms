@@ -31,7 +31,7 @@ public class ImpactAddon implements BBSAddonMod
     {
         MapType map = new MapType();
 
-        map.putString("bbs.ui.camera.clips." + ID, "Impact frame");
+        map.putString("bbs:ui.camera.clips." + ID, "ALI Impact FX");
         event.l10n.overwrite(map);
     }
 }
