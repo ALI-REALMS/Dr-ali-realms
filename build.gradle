@@ -4,7 +4,7 @@ plugins {
 
 version = project.mod_version
 group = 'com.alirealms'
-base { archivesName = 'impactfx' }
+base { archivesName = "impactfx-mc${project.minecraft_version}" }
 
 repositories {
     maven { url = 'https://maven.fabricmc.net/' }
