@@ -10,5 +10,6 @@ public class ImpactClient implements ClientModInitializer
         ImpactRenderer.init();
         PowerRenderer.init();
         SlashRenderer.init();
+        RiftRenderer.init();
     }
 }
