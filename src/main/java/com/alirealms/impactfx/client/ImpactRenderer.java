@@ -45,14 +45,14 @@ public final class ImpactRenderer
         CoreShaderRegistrationCallback.EVENT.register((context) ->
             context.register(Identifier.of("impactfx", "impact"), VertexFormats.POSITION, (p) -> program = p));
 
-        FilmEvents.RENDER_AFTER.register((controller, context) -> pending = controller);
-        FilmEvents.SHUTDOWN.register((controller) ->
-        {
-            if (pending == controller)
-            {
-                pending = null;
-            }
-        });
+      FilmEvents.RENDER_AFTER.register((controller, context) ->
+{
+    pending = controller != null
+        && controller.film != null
+        && controller.film.camera != null
+        ? controller
+        : null;
+});
 
         WorldRenderEvents.LAST.register(ImpactRenderer::onLast);
     }
