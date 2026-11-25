@@ -16,7 +16,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     // ملف BBS الذي ترفعه داخل مجلد libs
-    modCompileOnly files('libs/bbs-2.7-1.21.1.jar')
+    modCompileOnly files('libs/bbs-2.7-1.20.1.jar')
 }
 
 processResources {
@@ -24,8 +24,8 @@ processResources {
     filesMatching('fabric.mod.json') { expand 'version': project.version }
 }
 
-tasks.withType(JavaCompile).configureEach { it.options.release = 21 }
+tasks.withType(JavaCompile).configureEach { it.options.release = 17 }
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
