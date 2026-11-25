@@ -8,5 +8,6 @@ public class ImpactClient implements ClientModInitializer
     public void onInitializeClient()
     {
         ImpactRenderer.init();
+        PowerRenderer.init();
     }
 }
