@@ -33,8 +33,9 @@ public void registerLang(RegisterL10nEvent event)
     event.l10n.register((lang) ->
         java.util.List.of(
             new Link("impactfx", "strings/" + lang + ".json")
-        )
+        )                
     );
 
     event.l10n.reload();
+}
 }
