@@ -3,6 +3,7 @@ package com.alirealms.impactfx;
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
+import mchorse.bbs_mod.api.client.events.RegisterClipRenderersEvent;
 import mchorse.bbs_mod.api.client.events.RegisterL10nEvent;
 import mchorse.bbs_mod.api.events.RegisterCameraClipsEvent;
 import mchorse.bbs_mod.camera.clips.ClipFactoryData;
@@ -18,6 +19,12 @@ public class ImpactAddon implements BBSAddonMod
     public void registerClips(RegisterCameraClipsEvent event)
     {
         event.factory.register(ID, ImpactClip.class, new ClipFactoryData(Icons.FIVE_STAR, 0xFFD23C));
+    }
+
+    @Subscribe
+    public void registerRenderers(RegisterClipRenderersEvent event)
+    {
+        event.register(ImpactClip.class, new UIImpactClipRenderer());
     }
 
     @Subscribe
