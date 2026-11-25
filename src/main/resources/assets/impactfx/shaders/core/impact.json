@@ -1,0 +1,236 @@
+{
+ "vertex": "impactfx:impact",
+ "fragment": "impactfx:impact",
+ "samplers": [
+  {
+   "name": "Sampler0"
+  },
+  {
+   "name": "Sampler1"
+  }
+ ],
+ "uniforms": [
+  {
+   "name": "P0",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "P1",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "P2",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "P3",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "P4",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "P5",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ColBg",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ColInk",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ColAccent",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ColStar",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Actor0",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Actor1",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Actor2",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Actor3",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Actor4",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Actor5",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "InvProj",
+   "type": "matrix4x4",
+   "count": 16,
+   "values": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1
+   ]
+  },
+  {
+   "name": "CamRot",
+   "type": "matrix4x4",
+   "count": 16,
+   "values": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1
+   ]
+  }
+ ]
+}

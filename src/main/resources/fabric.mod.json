@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "impactfx",
+  "version": "${version}",
+  "name": "Impact Frame FX (BBS addon)",
+  "description": "Impact-frame VFX clip for BBS: white world, black distorted characters, stars, speed lines, shockwave. Colors editable.",
+  "authors": ["ALI-REALMS"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.alirealms.impactfx.client.ImpactClient"],
+    "bbs-addon": ["com.alirealms.impactfx.ImpactAddon"]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "bbs": "*"
+  }
+}
