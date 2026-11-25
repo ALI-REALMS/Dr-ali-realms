@@ -72,26 +72,27 @@ public final class ImpactRenderer
         u4(name, ((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F, 1F);
     }
 
-    private static void onLast(WorldRenderContext context)
+  private static void onLast(WorldRenderContext context)
+{
+    BaseFilmController controller = pending;
+
+    pending = null;
+
+    if (controller == null || controller.film == null || controller.film.camera == null)
     {
-        BaseFilmController controller = pending;
+        return;
+    }
 
-        pending = null;
+    MinecraftClient mc = MinecraftClient.getInstance();
+    int tick = controller.getTick();
+    float partial = mc.getRenderTickCounter().getTickDelta(false);
 
-        if (controller == null || program == null)
-        {
-            return;
-        }
+    /* find the strongest active impact clip */
+    List<ImpactClip> clips = controller.film.camera.getClips(ImpactClip.class);
 
-        MinecraftClient mc = MinecraftClient.getInstance();
-        int tick = controller.getTick();
-        float partial = mc.getRenderTickCounter().getTickDelta(false);
-
-        /* find the strongest active impact clip */
-        List<ImpactClip> clips = controller.film.camera.getClips(ImpactClip.class);
-        ImpactClip best = null;
-        float amount = 0F;
-        float progress = 0F;
+    ImpactClip best = null;
+    float amount = 0F;
+    float progress = 0F;
         float time = 0F;
 
         for (ImpactClip clip : clips)
