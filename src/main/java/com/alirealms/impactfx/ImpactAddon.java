@@ -26,13 +26,12 @@ public class ImpactAddon implements BBSAddonMod
         event.register(ImpactClip.class, UIImpactClip::new);
     }
 
-   @Subscribe
+  @Subscribe
 public void registerLang(RegisterL10nEvent event)
 {
     event.l10n.register((lang) ->
-        new Link("impactfx", "strings/" + lang + ".json")
+        java.util.List.of(
+            new Link("impactfx", "strings/" + lang + ".json")
+        )
     );
-
-    event.l10n.reload();
-}
 }
