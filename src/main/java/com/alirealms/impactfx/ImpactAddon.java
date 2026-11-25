@@ -19,6 +19,8 @@ public class ImpactAddon implements BBSAddonMod
     public static final String POWER_LABEL = "ALI power fx";
     public static final Link SLASH_ID = new Link("impactfx", "slash_fx");
     public static final String SLASH_LABEL = "ALI slash fx";
+    public static final Link RIFT_ID = new Link("impactfx", "rift_fx");
+    public static final String RIFT_LABEL = "ALI rift fx";
 
     @Subscribe
     public void registerClips(RegisterCameraClipsEvent event)
@@ -26,6 +28,7 @@ public class ImpactAddon implements BBSAddonMod
         event.factory.register(ID, ImpactClip.class, new ClipFactoryData(Icons.FIVE_STAR, 0xFFD23C));
         event.factory.register(POWER_ID, PowerClip.class, new ClipFactoryData(Icons.LIGHT, 0x9C6CFF));
         event.factory.register(SLASH_ID, SlashClip.class, new ClipFactoryData(Icons.SHAPES, 0x4FC3F7));
+        event.factory.register(RIFT_ID, RiftClip.class, new ClipFactoryData(Icons.PARTICLE, 0xB04CFF));
     }
 
     @Subscribe
@@ -34,6 +37,7 @@ public class ImpactAddon implements BBSAddonMod
         event.register(ImpactClip.class, new UILabelRenderer<ImpactClip>(IMPACT_LABEL));
         event.register(PowerClip.class, new UILabelRenderer<PowerClip>(POWER_LABEL));
         event.register(SlashClip.class, new UILabelRenderer<SlashClip>(SLASH_LABEL));
+        event.register(RiftClip.class, new UILabelRenderer<RiftClip>(RIFT_LABEL));
     }
 
     @Subscribe
@@ -42,6 +46,7 @@ public class ImpactAddon implements BBSAddonMod
         event.register(ImpactClip.class, UIImpactClip::new);
         event.register(PowerClip.class, UIPowerClip::new);
         event.register(SlashClip.class, UISlashClip::new);
+        event.register(RiftClip.class, UIRiftClip::new);
     }
 
 

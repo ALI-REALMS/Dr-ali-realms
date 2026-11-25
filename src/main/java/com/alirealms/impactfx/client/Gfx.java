@@ -37,6 +37,18 @@ final class Gfx
         RenderSystem.enableDepthTest();
     }
 
+    /** normal alpha blending (for dark voids) */
+    static void blendNormal()
+    {
+        RenderSystem.blendFunc(770, 771);
+    }
+
+    /** additive glow blending */
+    static void blendAdd()
+    {
+        RenderSystem.blendFunc(770, 1);
+    }
+
     static void cleanup()
     {
         RenderSystem.enableCull();
