@@ -2,6 +2,7 @@ package com.alirealms.impactfx;
 
 import mchorse.bbs_mod.camera.clips.CameraClip;
 import mchorse.bbs_mod.camera.data.Position;
+import mchorse.bbs_mod.settings.values.core.ValueString;
 import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
 import mchorse.bbs_mod.utils.clips.Clip;
@@ -10,7 +11,7 @@ import mchorse.bbs_mod.utils.clips.ClipContext;
 /** 3D sword slash / swing effect in front of a replay. */
 public class SlashClip extends CameraClip
 {
-    public final ValueInt type = new ValueInt("type", 0, 0, 5);
+    public final ValueInt type = new ValueInt("type", 0, 0, 6);
     public final ValueInt actor = new ValueInt("actor", 1, 1, 64);
     public final ValueFloat offX = new ValueFloat("offX", 0F, -50F, 50F);
     public final ValueFloat offY = new ValueFloat("offY", 1.1F, -50F, 50F);
@@ -26,6 +27,12 @@ public class SlashClip extends CameraClip
     public final ValueInt count = new ValueInt("count", 5, 1, 20);
     public final ValueFloat intensity = new ValueFloat("intensity", 1F, 0F, 3F);
     public final ValueInt seed = new ValueInt("seed", 5, 0, 9999);
+    /** type 6: bone of the replay model to follow (empty = auto-detect the right hand/arm) */
+    public final ValueString bone = new ValueString("bone", "");
+    /** distance from the bone origin to the weapon tip */
+    public final ValueFloat reach = new ValueFloat("reach", 1.2F, 0.1F, 10F);
+    /** bone axis the weapon points along: 0 +X, 1 -X, 2 +Y, 3 -Y, 4 +Z, 5 -Z */
+    public final ValueInt axis = new ValueInt("axis", 3, 0, 5);
     public final ValueInt core = new ValueInt("core", 0xFFFFFF);
     public final ValueInt edge = new ValueInt("edge", 0x2E9BFF);
 
@@ -47,6 +54,9 @@ public class SlashClip extends CameraClip
         this.add(this.count);
         this.add(this.intensity);
         this.add(this.seed);
+        this.add(this.bone);
+        this.add(this.reach);
+        this.add(this.axis);
         this.add(this.core);
         this.add(this.edge);
 

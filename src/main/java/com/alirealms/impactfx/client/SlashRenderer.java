@@ -6,14 +6,26 @@ import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import mchorse.bbs_mod.film.FilmMatrices;
+import mchorse.bbs_mod.forms.FormUtilsClient;
+import mchorse.bbs_mod.forms.forms.Form;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
+import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /** 3D slash / swing ribbons. Re-uses the primitives and per-frame state of PowerRenderer. */
 public final class SlashRenderer
 {
     private static final float PI = (float) Math.PI;
+
+    /** per clip history of the weapon base/tip in ABSOLUTE world coordinates: {tick, bx,by,bz, tx,ty,tz} */
+    private static final Map<SlashClip, ArrayDeque<double[]>> HISTORY = new WeakHashMap<>();
+    private static final Vector3f TMP = new Vector3f();
 
     private SlashRenderer() {}
 
@@ -121,6 +133,13 @@ public final class SlashRenderer
             float p = clamp01(rel / duration);
             float R = clip.radius.get();
 
+            if (clip.type.get() == 6)
+            {
+                follow(controller, clip, replays.get(index), entity, cam, partial, rel);
+
+                continue;
+            }
+
             Gfx.begin();
 
             switch (clip.type.get())
@@ -181,6 +200,137 @@ public final class SlashRenderer
         {
             Gfx.cleanup();
         }
+    }
+
+    private static String pickBone(SlashClip clip, Form form)
+    {
+        String name = clip.bone.get();
+
+        if (name != null && !name.trim().isEmpty())
+        {
+            return name.trim();
+        }
+
+        List<String> bones = FormUtilsClient.getBones(form);
+
+        if (bones == null || bones.isEmpty())
+        {
+            return null;
+        }
+
+        String[] hints = {"hand_r", "right_hand", "righthand", "hand_right", "r_hand", "arm_r", "right_arm", "rightarm", "arm_right", "r_arm", "hand", "arm"};
+
+        for (String hint : hints)
+        {
+            for (String b : bones)
+            {
+                if (b.toLowerCase().equals(hint))
+                {
+                    return b;
+                }
+            }
+        }
+
+        for (String hint : hints)
+        {
+            for (String b : bones)
+            {
+                if (b.toLowerCase().contains(hint))
+                {
+                    return b;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Weapon trail that follows a bone of the replay (hand / sword), built from the bone history. */
+    private static void follow(BaseFilmController controller, SlashClip clip, Replay replay, IEntity entity, Vec3d cam, float partial, float rel)
+    {
+        Form form = entity.getForm();
+
+        if (form == null)
+        {
+            return;
+        }
+
+        String bone = pickBone(clip, form);
+
+        if (bone == null)
+        {
+            return;
+        }
+
+        Matrix4f bm = FilmMatrices.getBoneCompositeMatrix(controller.getEntities(), entity, replay, cam.x, cam.y, cam.z, partial, bone, false);
+
+        if (bm == null)
+        {
+            return;
+        }
+
+        float reach = clip.reach.get();
+        int axis = clip.axis.get();
+        float ax = axis == 0 ? 1F : axis == 1 ? -1F : 0F;
+        float ay = axis == 2 ? 1F : axis == 3 ? -1F : 0F;
+        float az = axis == 4 ? 1F : axis == 5 ? -1F : 0F;
+
+        ArrayDeque<double[]> hist = HISTORY.computeIfAbsent(clip, (k) -> new ArrayDeque<>());
+        double[] last = hist.peekLast();
+
+        if (last != null && (rel < last[0] - 0.01F || rel - last[0] > 4F))
+        {
+            hist.clear();
+            last = null;
+        }
+
+        bm.transformPosition(ax * reach * 0.3F, ay * reach * 0.3F, az * reach * 0.3F, TMP);
+
+        double bx = TMP.x + cam.x, by = TMP.y + cam.y, bz = TMP.z + cam.z;
+
+        bm.transformPosition(ax * reach, ay * reach, az * reach, TMP);
+
+        double tx = TMP.x + cam.x, ty = TMP.y + cam.y, tz = TMP.z + cam.z;
+
+        if (last == null || rel > last[0] + 0.001F)
+        {
+            hist.addLast(new double[] {rel, bx, by, bz, tx, ty, tz});
+        }
+
+        float life = 2F + clip.tail.get() * 14F;
+
+        while (hist.size() > 400 || (!hist.isEmpty() && rel - hist.peekFirst()[0] > life))
+        {
+            hist.pollFirst();
+        }
+
+        if (hist.size() < 2)
+        {
+            return;
+        }
+
+        Gfx.begin();
+
+        double[] prev = null;
+
+        for (double[] cur : hist)
+        {
+            if (prev != null)
+            {
+                float a0 = (float) Math.pow(clamp01(1F - (rel - (float) prev[0]) / life), 1.5);
+                float a1 = (float) Math.pow(clamp01(1F - (rel - (float) cur[0]) / life), 1.5);
+
+                PowerRenderer.vert((float) (prev[1] - cam.x), (float) (prev[2] - cam.y), (float) (prev[3] - cam.z), 1F, a0 * 0.2F);
+                PowerRenderer.vert((float) (prev[4] - cam.x), (float) (prev[5] - cam.y), (float) (prev[6] - cam.z), 0F, a0);
+                PowerRenderer.vert((float) (cur[4] - cam.x), (float) (cur[5] - cam.y), (float) (cur[6] - cam.z), 0F, a1);
+                PowerRenderer.vert((float) (cur[1] - cam.x), (float) (cur[2] - cam.y), (float) (cur[3] - cam.z), 1F, a1 * 0.2F);
+            }
+
+            prev = cur;
+        }
+
+        PowerRenderer.glow((float) (tx - cam.x), (float) (ty - cam.y), (float) (tz - cam.z), reach * 0.12F, 0.5F, 0.9F);
+        Gfx.end();
     }
 
     /**

@@ -3,7 +3,7 @@ package com.alirealms.impactfx;
 public final class SlashPresets
 {
     public static final String[] NAMES = {
-        "Blue crescent slash", "Red X slash", "Triple claw", "Swing trail (white)", "Spin slash (green)", "Flurry (gold)"
+        "Blue crescent slash", "Red X slash", "Triple claw", "Swing trail (white)", "Spin slash (green)", "Flurry (gold)", "Follow hand (blue)"
     };
 
     private SlashPresets() {}
@@ -35,6 +35,10 @@ public final class SlashPresets
                 break;
             case 5:
                 c.type.set(5); c.core.set(0xFFFFFF); c.edge.set(0xFFB300); c.count.set(7); c.radius.set(2.4F);
+                break;
+            case 6:
+                c.type.set(6); c.core.set(0xFFFFFF); c.edge.set(0x2E9BFF); c.tail.set(0.7F); c.reach.set(1.2F);
+                c.axis.set(3); c.bone.set("");
                 break;
             default:
                 break;
