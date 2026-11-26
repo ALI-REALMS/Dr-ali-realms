@@ -70,22 +70,8 @@ public final class ImpactRenderer
 
         WorldRenderEvents.LAST.register((context) ->
         {
-            if (!Compat.iris())
-            {
-                run(false);
-            }
+            run(false);
         });
-
-        Gfx.initLate();
-    }
-
-    /** called from the HUD hook when a shader pack is active */
-    static void drawLate()
-    {
-        if (Compat.iris())
-        {
-            run(true);
-        }
     }
 
     private static void u4(String name, float a, float b, float c, float d)

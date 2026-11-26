@@ -61,14 +61,6 @@ final class Gfx
         }
     }
 
-    static void initLate()
-    {
-        HudRenderCallback.EVENT.register((a, b) ->
-        {
-            ImpactRenderer.drawLate();
-            flushLate();
-        });
-    }
 
     static void flushLate()
     {
@@ -130,16 +122,15 @@ final class Gfx
     /** additive glow state */
     static void setup()
     {
-        late = Compat.iris();
-
-        if (late)
+        if (Compat.iris() && glow != null)
         {
-            proj = new Matrix4f(RenderSystem.getProjectionMatrix());
-            additive = true;
-            return;
+            RenderSystem.setShader(() -> glow);
+        }
+        else
+        {
+            RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         }
 
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(770, 1);
         RenderSystem.disableCull();
