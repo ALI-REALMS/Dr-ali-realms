@@ -51,17 +51,25 @@ public class ImpactAddon implements BBSAddonMod
 
 
 
-@Subscribe
-public void registerLang(RegisterL10nEvent event)
-{
-    MapType map = new MapType();
+    @Subscribe
+    public void registerLang(RegisterL10nEvent event)
+    {
+        MapType map = new MapType();
 
-    map.putString(
-        "bbs.ui.camera.clips." + ID.toString(),
-        "ALI Impact FX"
-    );
+        name(event, map, ID, IMPACT_LABEL);
+        name(event, map, POWER_ID, POWER_LABEL);
+        name(event, map, SLASH_ID, SLASH_LABEL);
+        name(event, map, RIFT_ID, RIFT_LABEL);
 
-    event.l10n.overwrite(map);
-}
+        event.l10n.overwrite(map);
+    }
 
+    /** L10n.overwrite only replaces keys that already exist, so create the key first. */
+    private static void name(RegisterL10nEvent event, MapType map, Link link, String label)
+    {
+        String key = "bbs.ui.camera.clips." + link.toString();
+
+        event.l10n.getKey(key);
+        map.putString(key, label);
+    }
 }
