@@ -10,8 +10,8 @@ import mchorse.bbs_mod.utils.clips.ClipContext;
 /** 3D space rift / dimensional tear / portal in front of a replay. */
 public class RiftClip extends CameraClip
 {
-    /** 0 lens tear, 1 round portal, 2 cracks (three rifts) */
-    public final ValueInt type = new ValueInt("type", 0, 0, 2);
+    /** 0 lens tear, 1 round portal, 2 three rifts, 3 lightning strike, 4 ground cracks, 5 wind vortex, 6 light slit */
+    public final ValueInt type = new ValueInt("type", 0, 0, 6);
     public final ValueInt actor = new ValueInt("actor", 1, 1, 64);
     public final ValueFloat offX = new ValueFloat("offX", 0F, -50F, 50F);
     public final ValueFloat offY = new ValueFloat("offY", 1.3F, -50F, 50F);

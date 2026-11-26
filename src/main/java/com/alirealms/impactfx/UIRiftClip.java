@@ -55,7 +55,7 @@ public class UIRiftClip extends UIClip<RiftClip>
             }));
         }
 
-        this.type = this.i(c.type, "Type 0 Tear | 1 Round portal | 2 Cracks", 0, 2);
+        this.type = this.i(c.type, "Type 0 Tear|1 Portal|2 3 rifts|3 Lightning|4 Ground cracks|5 Wind orb|6 Light slit", 0, 6);
         this.actor = this.i(c.actor, "Replay number (in front of it)", 1, 64);
         this.offX = this.f(c.offX, "Offset X", -50, 50);
         this.offY = this.f(c.offY, "Offset Y (height)", -50, 50);

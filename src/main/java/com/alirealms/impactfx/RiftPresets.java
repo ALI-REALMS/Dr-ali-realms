@@ -3,7 +3,8 @@ package com.alirealms.impactfx;
 public final class RiftPresets
 {
     public static final String[] NAMES = {
-        "Purple space rift", "Red hell crack", "Blue dimension tear", "Green toxic portal", "Golden cracks", "Black void"
+        "Purple space rift", "Red hell crack", "Blue dimension tear", "Green toxic portal", "Golden cracks", "Black void",
+        "Blue lightning strike", "Gold lightning + cracks", "Ground cracks (dark)", "Wind shred orb", "Orange light slit"
     };
 
     private RiftPresets() {}
@@ -38,6 +39,26 @@ public final class RiftPresets
             case 5:
                 c.type.set(0); c.core.set(0x8844AA); c.edge.set(0x3A0A5A); c.voidColor.set(0x000000);
                 c.length.set(5F); c.width.set(1.1F); c.tilt.set(0F);
+                break;
+            case 6:
+                c.type.set(3); c.core.set(0xFFFFFF); c.edge.set(0x2E7BFF); c.voidColor.set(0x000010);
+                c.offY.set(0.02F); c.dist.set(4F); c.length.set(14F); c.width.set(1.6F); c.jagged.set(1F); c.sparks.set(30); c.pulse.set(1F);
+                break;
+            case 7:
+                c.type.set(3); c.core.set(0xFFFFFF); c.edge.set(0xFFB020); c.voidColor.set(0x000000);
+                c.offY.set(0.02F); c.dist.set(4F); c.length.set(14F); c.width.set(1.8F); c.jagged.set(1.2F); c.sparks.set(40);
+                break;
+            case 8:
+                c.type.set(4); c.core.set(0xFFB070); c.edge.set(0xFF3010); c.voidColor.set(0x000000);
+                c.offY.set(0.02F); c.dist.set(4F); c.length.set(6F); c.width.set(1.2F); c.sparks.set(14);
+                break;
+            case 9:
+                c.type.set(5); c.core.set(0xFFFFFF); c.edge.set(0x8FE3F0); c.voidColor.set(0x000000);
+                c.offY.set(1.2F); c.dist.set(3F); c.length.set(2F); c.width.set(1.3F); c.sparks.set(12); c.jagged.set(1F);
+                break;
+            case 10:
+                c.type.set(6); c.core.set(0xFFFFFF); c.edge.set(0xFF8A00); c.voidColor.set(0xFFB040);
+                c.offY.set(1.6F); c.dist.set(3F); c.tilt.set(0F); c.length.set(4.5F); c.width.set(0.22F); c.jagged.set(0.15F); c.sparks.set(30);
                 break;
             default:
                 break;
