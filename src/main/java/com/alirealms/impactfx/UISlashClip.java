@@ -9,6 +9,7 @@ import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.input.UIColor;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
+import mchorse.bbs_mod.ui.framework.elements.input.text.UITextbox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,8 @@ public class UISlashClip extends UIClip<SlashClip>
 {
     private List<UIElement> presetButtons;
 
+    public UITextbox bone;
+    public UITrackpad reach, axis;
     public UITrackpad type, actor, offX, offY, offZ, yaw, tilt, radius, arc, thickness, tail, count, intensity, seed;
     public UIColor core, edge;
 
@@ -55,7 +58,7 @@ public class UISlashClip extends UIClip<SlashClip>
             }));
         }
 
-        this.type = this.i(c.type, "Type 0 Crescent|1 X|2 Claw|3 Swing|4 Spin|5 Flurry", 0, 5);
+        this.type = this.i(c.type, "Type 0 Crescent|1 X|2 Claw|3 Swing|4 Spin|5 Flurry|6 Follow hand", 0, 6);
         this.actor = this.i(c.actor, "Replay number (follows it)", 1, 64);
         this.offX = this.f(c.offX, "Offset X", -50, 50);
         this.offY = this.f(c.offY, "Offset Y (height)", -50, 50);
@@ -69,6 +72,9 @@ public class UISlashClip extends UIClip<SlashClip>
         this.count = this.i(c.count, "Count (flurry)", 1, 20);
         this.intensity = this.f(c.intensity, "Brightness", 0, 3);
         this.seed = this.i(c.seed, "Seed", 0, 9999);
+        this.bone = this.textbox(100, c.bone);
+        this.reach = this.f(c.reach, "Weapon reach", 0.1, 10);
+        this.axis = this.i(c.axis, "Weapon axis 0 +X|1 -X|2 +Y|3 -Y|4 +Z|5 -Z", 0, 5);
         this.core = this.color(c.core);
         this.edge = this.color(c.edge);
     }
@@ -80,6 +86,7 @@ public class UISlashClip extends UIClip<SlashClip>
 
         this.panels.add(this.section(IKey.raw("Presets"), this.presetButtons.toArray(new UIElement[0])));
         this.panels.add(this.section(IKey.raw("Effect"), this.type, this.actor, this.offX, this.offY, this.offZ, this.yaw, this.tilt));
+        this.panels.add(this.section(IKey.raw("Type 6: bone name (empty = auto right hand)"), this.bone, this.reach, this.axis));
         this.panels.add(this.section(IKey.raw("Core color"), this.core));
         this.panels.add(this.section(IKey.raw("Edge color"), this.edge));
         this.panels.add(this.section(IKey.raw("Shape"), this.radius, this.arc, this.thickness, this.tail, this.count, this.intensity, this.seed));
