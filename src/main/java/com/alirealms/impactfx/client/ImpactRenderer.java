@@ -22,6 +22,7 @@ import net.minecraft.client.render.VertexFormats;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -37,13 +38,19 @@ public final class ImpactRenderer
     private static ShaderProgram program;
     private static SimpleFramebuffer copy;
     private static volatile BaseFilmController pending;
+    private static Quaternionf snapRot = new Quaternionf();
+    private static Vec3d snapPos = Vec3d.ZERO;
+    private static Matrix4f snapProj = new Matrix4f();
 
     private ImpactRenderer() {}
 
     public static void init()
     {
         CoreShaderRegistrationCallback.EVENT.register((context) ->
-            context.register(Identifier.of("impactfx", "impact"), VertexFormats.POSITION, (p) -> program = p));
+            {
+                context.register(Identifier.of("impactfx", "impact"), VertexFormats.POSITION, (p) -> program = p);
+                context.register(Identifier.of("impactfx", "glow"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glow = p);
+            });
 
       FilmEvents.RENDER_AFTER.register((controller, context) ->
 {
@@ -52,9 +59,33 @@ public final class ImpactRenderer
         && controller.film.camera != null
         ? controller
         : null;
+
+    if (pending != null)
+    {
+        snapRot = new Quaternionf(context.camera().getRotation());
+        snapPos = context.camera().getPos();
+        snapProj = new Matrix4f(RenderSystem.getProjectionMatrix());
+    }
 });
 
-        WorldRenderEvents.LAST.register(ImpactRenderer::onLast);
+        WorldRenderEvents.LAST.register((context) ->
+        {
+            if (!Compat.iris())
+            {
+                run(false);
+            }
+        });
+
+        Gfx.initLate();
+    }
+
+    /** called from the HUD hook when a shader pack is active */
+    static void drawLate()
+    {
+        if (Compat.iris())
+        {
+            run(true);
+        }
     }
 
     private static void u4(String name, float a, float b, float c, float d)
@@ -72,20 +103,20 @@ public final class ImpactRenderer
         u4(name, ((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F, 1F);
     }
 
-  private static void onLast(WorldRenderContext context)
+  private static void run(boolean hud)
 {
     BaseFilmController controller = pending;
 
     pending = null;
 
-    if (controller == null || controller.film == null || controller.film.camera == null)
+    if (controller == null || program == null || controller.film == null || controller.film.camera == null)
     {
         return;
     }
 
     MinecraftClient mc = MinecraftClient.getInstance();
     int tick = controller.getTick();
-    float partial = mc.getRenderTickCounter().getTickDelta(false);
+    float partial = Gfx.partial(null);
 
     /* find the strongest active impact clip */
     List<ImpactClip> clips = controller.film.camera.getClips(ImpactClip.class);
@@ -140,9 +171,9 @@ public final class ImpactRenderer
         main.beginWrite(false);
 
         /* matrices */
-        Matrix4f invProj = new Matrix4f(RenderSystem.getProjectionMatrix()).invert();
-        Matrix4f camRot = new Matrix4f().rotation(context.camera().getRotation());
-        Vec3d cam = context.camera().getPos();
+        Matrix4f invProj = new Matrix4f(snapProj).invert();
+        Matrix4f camRot = new Matrix4f().rotation(snapRot);
+        Vec3d cam = snapPos;
 
         GlUniform g = program.getUniform("InvProj");
 
@@ -221,6 +252,15 @@ public final class ImpactRenderer
         BufferRenderer.drawWithGlobalProgram(buffer.end());
 
         RenderSystem.depthMask(true);
-        RenderSystem.enableDepthTest();
+
+        if (hud)
+        {
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+        }
+        else
+        {
+            RenderSystem.enableDepthTest();
+        }
     }
 }
