@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * Tiny drawing layer. This is the ONLY file that differs between Minecraft versions
- * (1.20.1 here, 1.21.1 on the other branch).
+ * (1.21.1 here, 1.20.1 on the other branch).
  */
 final class Gfx
 {
@@ -97,14 +97,13 @@ final class Gfx
             {
                 RenderSystem.blendFunc(770, b.add ? 1 : 771);
 
-                BufferBuilder bb = Tessellator.getInstance().getBuffer();
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+                BufferBuilder bb = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
                 for (int i = 0; i < b.n; i++)
                 {
                     int k = i * 7;
 
-                    bb.vertex(b.d[k], b.d[k + 1], b.d[k + 2]).color(b.d[k + 3], b.d[k + 4], b.d[k + 5], b.d[k + 6]).next();
+                    bb.vertex(b.d[k], b.d[k + 1], b.d[k + 2]).color(b.d[k + 3], b.d[k + 4], b.d[k + 5], b.d[k + 6]);
                 }
 
                 BufferRenderer.drawWithGlobalProgram(bb.end());
@@ -123,7 +122,7 @@ final class Gfx
 
     static float partial(WorldRenderContext context)
     {
-        return context.tickDelta();
+        return MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(false);
     }
 
     /** additive glow state */
@@ -192,8 +191,7 @@ final class Gfx
             return;
         }
 
-        buffer = Tessellator.getInstance().getBuffer();
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
     }
 
     static void v(Matrix4f m, float x, float y, float z, float r, float g, float b, float a)
@@ -205,7 +203,7 @@ final class Gfx
             return;
         }
 
-        buffer.vertex(m, x, y, z).color(clamp(r), clamp(g), clamp(b), clamp(a)).next();
+        buffer.vertex(m, x, y, z).color(clamp(r), clamp(g), clamp(b), clamp(a));
     }
 
     static void end()

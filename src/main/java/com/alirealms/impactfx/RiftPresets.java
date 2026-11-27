@@ -4,7 +4,7 @@ public final class RiftPresets
 {
     public static final String[] NAMES = {
         "Purple space rift", "Red hell crack", "Blue dimension tear", "Green toxic portal", "Golden cracks", "Black void",
-        "Blue lightning strike", "Gold lightning + cracks", "Ground cracks (dark)", "Wind shred orb", "Orange light slit"
+        "Blue lightning strike", "Gold lightning + cracks", "Ground cracks (dark)", "Wind shred orb", "Orange light slit", "Magenta energy burst", "Blue plasma burst", "Fire burst"
     };
 
     private RiftPresets() {}
@@ -59,6 +59,18 @@ public final class RiftPresets
             case 10:
                 c.type.set(6); c.core.set(0xFFFFFF); c.edge.set(0xFF8A00); c.voidColor.set(0xFFB040);
                 c.offY.set(1.6F); c.dist.set(3F); c.tilt.set(0F); c.length.set(4.5F); c.width.set(0.22F); c.jagged.set(0.15F); c.sparks.set(30);
+                break;
+            case 11:
+                c.type.set(7); c.core.set(0xFFFFFF); c.edge.set(0xFF2BD6); c.voidColor.set(0x2B3BFF);
+                c.offY.set(0.05F); c.dist.set(3F); c.length.set(3F); c.width.set(1.1F); c.sparks.set(60);
+                break;
+            case 12:
+                c.type.set(7); c.core.set(0xF2FFFF); c.edge.set(0x20C8FF); c.voidColor.set(0x1020FF);
+                c.offY.set(0.05F); c.dist.set(3F); c.length.set(3.5F); c.width.set(1.2F); c.sparks.set(60);
+                break;
+            case 13:
+                c.type.set(7); c.core.set(0xFFF2B0); c.edge.set(0xFF7A10); c.voidColor.set(0xC01800);
+                c.offY.set(0.05F); c.dist.set(3F); c.length.set(3.5F); c.width.set(1.2F); c.sparks.set(70);
                 break;
             default:
                 break;

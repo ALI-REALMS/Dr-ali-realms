@@ -48,9 +48,9 @@ public final class ImpactRenderer
     {
         CoreShaderRegistrationCallback.EVENT.register((context) ->
             {
-                context.register(new Identifier("impactfx", "impact"), VertexFormats.POSITION, (p) -> program = p);
-                context.register(new Identifier("impactfx", "glow"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glow = p);
-                context.register(new Identifier("impactfx", "glowlate"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glowLate = p);
+                context.register(Identifier.of("impactfx", "impact"), VertexFormats.POSITION, (p) -> program = p);
+                context.register(Identifier.of("impactfx", "glow"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glow = p);
+                context.register(Identifier.of("impactfx", "glowlate"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glowLate = p);
             });
 
       FilmEvents.RENDER_AFTER.register((controller, context) ->
@@ -105,7 +105,7 @@ public final class ImpactRenderer
 
     MinecraftClient mc = MinecraftClient.getInstance();
     int tick = controller.getTick();
-    float partial = mc.getTickDelta();
+    float partial = Gfx.partial(null);
 
     /* find the strongest active impact clip */
     List<ImpactClip> clips = controller.film.camera.getClips(ImpactClip.class);
@@ -232,14 +232,12 @@ public final class ImpactRenderer
         RenderSystem.setShaderTexture(0, copy.getColorAttachment());
         RenderSystem.setShaderTexture(1, copy.getDepthAttachment());
 
-        BufferBuilder buffer = Tessellator.getInstance().getBuffer();
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
 
-        buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-
-        buffer.vertex(-1F, -1F, 0F).next();
-        buffer.vertex(1F, -1F, 0F).next();
-        buffer.vertex(1F, 1F, 0F).next();
-        buffer.vertex(-1F, 1F, 0F).next();
+        buffer.vertex(-1F, -1F, 0F);
+        buffer.vertex(1F, -1F, 0F);
+        buffer.vertex(1F, 1F, 0F);
+        buffer.vertex(-1F, 1F, 0F);
         BufferRenderer.drawWithGlobalProgram(buffer.end());
 
         RenderSystem.depthMask(true);
