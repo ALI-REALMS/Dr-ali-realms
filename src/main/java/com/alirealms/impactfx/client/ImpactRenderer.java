@@ -50,6 +50,7 @@ public final class ImpactRenderer
             {
                 context.register(Identifier.of("impactfx", "impact"), VertexFormats.POSITION, (p) -> program = p);
                 context.register(Identifier.of("impactfx", "glow"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glow = p);
+                context.register(Identifier.of("impactfx", "glowlate"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glowLate = p);
             });
 
       FilmEvents.RENDER_AFTER.register((controller, context) ->
@@ -72,6 +73,8 @@ public final class ImpactRenderer
         {
             run(false);
         });
+
+        Gfx.initLate();
     }
 
     private static void u4(String name, float a, float b, float c, float d)

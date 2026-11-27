@@ -28,6 +28,7 @@ final class Gfx
 
     /* shader-pack (Iris) mode: geometry is recorded and drawn later with our own shader */
     static ShaderProgram glow;
+    static ShaderProgram glowLate;
     private static boolean late;
     private static boolean additive = true;
     private static Matrix4f proj = new Matrix4f();
@@ -62,6 +63,11 @@ final class Gfx
     }
 
 
+    static void initLate()
+    {
+        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.LAST.register((context) -> flushLate());
+    }
+
     static void flushLate()
     {
         if (queue.isEmpty())
@@ -69,7 +75,7 @@ final class Gfx
             return;
         }
 
-        ShaderProgram p = glow;
+        ShaderProgram p = glowLate;
 
         if (p != null)
         {
@@ -122,14 +128,16 @@ final class Gfx
     /** additive glow state */
     static void setup()
     {
-        if (Compat.iris() && glow != null)
+        late = Compat.iris() && glowLate != null;
+
+        if (late)
         {
-            RenderSystem.setShader(() -> glow);
+            proj = new Matrix4f(RenderSystem.getProjectionMatrix());
+            additive = true;
+            return;
         }
-        else
-        {
-            RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        }
+
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(770, 1);
