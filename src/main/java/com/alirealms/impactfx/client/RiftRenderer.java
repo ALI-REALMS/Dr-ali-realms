@@ -274,18 +274,28 @@ public final class RiftRenderer
                 size, 0.2F, (1F - ph) * open);
         }
 
+        /* Blender-style streak sparks flying out of the tear + short electric arcs along it */
+        EnergyFx.streaks(cx, cy, cz, sparks * 2, W * 2.2F, 0.35F, 1.6F, time, seed + 5, W * 0.03F, open, 0F);
+        EnergyFx.arcsAlong(sx, sy, sz, N, qx, qy, qz, W, time, seed, open);
+
         Gfx.end();
     }
 
     /* ====================================================== extra effects (types 3..6) */
 
-    private static float[] cross(float ax, float ay, float az, float bx, float by, float bz)
+    static float[] cross(float ax, float ay, float az, float bx, float by, float bz)
     {
         return new float[] {ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx};
     }
 
     /** camera facing ribbon between two points */
-    private static void ribbon(float x0, float y0, float z0, float x1, float y1, float z1, float w0, float w1, float t, float a0, float a1)
+    static void ribbon(float x0, float y0, float z0, float x1, float y1, float z1, float w0, float w1, float t, float a0, float a1)
+    {
+        ribbonG(x0, y0, z0, x1, y1, z1, w0, w1, t, t, a0, a1);
+    }
+
+    /** camera facing feathered ribbon with a colour gradient t0 -> t1 along its length */
+    static void ribbonG(float x0, float y0, float z0, float x1, float y1, float z1, float w0, float w1, float t0, float t1, float a0, float a1)
     {
         float dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
         float mx = (x0 + x1) * 0.5F, my = (y0 + y1) * 0.5F, mz = (z0 + z1) * 0.5F;
@@ -305,15 +315,15 @@ public final class RiftRenderer
 
         for (int k = 0; k < 4; k++)
         {
-            PowerRenderer.vert(x0 + sd[0] * w0 * off[k], y0 + sd[1] * w0 * off[k], z0 + sd[2] * w0 * off[k], t, a0 * fa[k]);
-            PowerRenderer.vert(x0 + sd[0] * w0 * off[k + 1], y0 + sd[1] * w0 * off[k + 1], z0 + sd[2] * w0 * off[k + 1], t, a0 * fa[k + 1]);
-            PowerRenderer.vert(x1 + sd[0] * w1 * off[k + 1], y1 + sd[1] * w1 * off[k + 1], z1 + sd[2] * w1 * off[k + 1], t, a1 * fa[k + 1]);
-            PowerRenderer.vert(x1 + sd[0] * w1 * off[k], y1 + sd[1] * w1 * off[k], z1 + sd[2] * w1 * off[k], t, a1 * fa[k]);
+            PowerRenderer.vert(x0 + sd[0] * w0 * off[k], y0 + sd[1] * w0 * off[k], z0 + sd[2] * w0 * off[k], t0, a0 * fa[k]);
+            PowerRenderer.vert(x0 + sd[0] * w0 * off[k + 1], y0 + sd[1] * w0 * off[k + 1], z0 + sd[2] * w0 * off[k + 1], t0, a0 * fa[k + 1]);
+            PowerRenderer.vert(x1 + sd[0] * w1 * off[k + 1], y1 + sd[1] * w1 * off[k + 1], z1 + sd[2] * w1 * off[k + 1], t1, a1 * fa[k + 1]);
+            PowerRenderer.vert(x1 + sd[0] * w1 * off[k], y1 + sd[1] * w1 * off[k], z1 + sd[2] * w1 * off[k], t1, a1 * fa[k]);
         }
     }
 
     /** white-hot narrow ribbon for the core of a bolt */
-    private static void ribbonHot(float x0, float y0, float z0, float x1, float y1, float z1, float w, float a)
+    static void ribbonHot(float x0, float y0, float z0, float x1, float y1, float z1, float w, float a)
     {
         float dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
         float mx = (x0 + x1) * 0.5F, my = (y0 + y1) * 0.5F, mz = (z0 + z1) * 0.5F;
@@ -340,7 +350,7 @@ public final class RiftRenderer
     }
 
     /** rays in the camera plane (star flare) */
-    private static void flare(float x, float y, float z, int n, float len, float w, float alpha, float rot)
+    static void flare(float x, float y, float z, int n, float len, float w, float alpha, float rot)
     {
         for (int i = 0; i < n; i++)
         {
@@ -387,6 +397,7 @@ public final class RiftRenderer
             case 3: lightning(x, y, z, p, time, L, W, jag, sparks, seed, true); break;
             case 4: cracksOnly(x, y, z, p, time, L, W, sparks, seed); break;
             case 5: vortex(x, y, z, p, time, W, jag, sparks, seed); break;
+            case 7: EnergyFx.burst(c, x, y - c.offY.get() + 0.03F, z, y, p, time, L, W, jag, sparks, seed, vr, vg, vb); break;
             default: slit(c, x, y, z, rx, rz, p, time, L, W, jag, sparks, seed); break;
         }
     }
@@ -451,18 +462,8 @@ public final class RiftRenderer
             flare(x, y + 0.1F, z, 8, W * (0.9F + 1.4F * flash), W * 0.03F, 0.9F * vis, time * 0.5F);
         }
 
-        /* flying shards */
-        for (int k = 0; k < sparks; k++)
-        {
-            float ph = PowerRenderer.fract(time * 0.5F + PowerRenderer.hash(k * 1.3F + seed));
-            float a = PowerRenderer.hash(k * 3.7F + seed) * 6.2832F;
-            float sp = (0.4F + PowerRenderer.hash(k * 7.1F + seed)) * W * 1.4F;
-            float sx = x + (float) Math.cos(a) * sp * ph;
-            float sz = z + (float) Math.sin(a) * sp * ph;
-            float sy = y + 0.1F + (ph * 2.2F - ph * ph * 2.6F) * W * 0.9F * (0.5F + PowerRenderer.hash(k * 2.9F + seed));
-
-            shard(sx, sy, sz, W * 0.025F, W * 0.06F, k + time * 2F, 0.2F, (1F - ph) * vis);
-        }
+        /* flying sparks: motion streaks */
+        EnergyFx.streaks(x, y + 0.1F, z, sparks * 3, W * 2.2F, 0.7F, 2.4F, time, seed, W * 0.025F, vis, 0.6F);
 
         Gfx.end();
 
@@ -477,7 +478,7 @@ public final class RiftRenderer
         PowerRenderer.glow(x, y, z, size, t, a);
     }
 
-    private static void glowDisc(float x, float y, float z, float r, float a)
+    static void glowDisc(float x, float y, float z, float r, float a)
     {
         int n = 28;
         int rings = 5;
