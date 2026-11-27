@@ -299,10 +299,44 @@ public final class RiftRenderer
 
         sd[0] /= l; sd[1] /= l; sd[2] /= l;
 
-        PowerRenderer.vert(x0 - sd[0] * w0, y0 - sd[1] * w0, z0 - sd[2] * w0, t, a0);
-        PowerRenderer.vert(x0 + sd[0] * w0, y0 + sd[1] * w0, z0 + sd[2] * w0, t, a0);
-        PowerRenderer.vert(x1 + sd[0] * w1, y1 + sd[1] * w1, z1 + sd[2] * w1, t, a1);
-        PowerRenderer.vert(x1 - sd[0] * w1, y1 - sd[1] * w1, z1 - sd[2] * w1, t, a1);
+        /* feathered cross-section: 0, .35, 1, .35, 0 */
+        float[] off = {-1F, -0.5F, 0F, 0.5F, 1F};
+        float[] fa = {0F, 0.35F, 1F, 0.35F, 0F};
+
+        for (int k = 0; k < 4; k++)
+        {
+            PowerRenderer.vert(x0 + sd[0] * w0 * off[k], y0 + sd[1] * w0 * off[k], z0 + sd[2] * w0 * off[k], t, a0 * fa[k]);
+            PowerRenderer.vert(x0 + sd[0] * w0 * off[k + 1], y0 + sd[1] * w0 * off[k + 1], z0 + sd[2] * w0 * off[k + 1], t, a0 * fa[k + 1]);
+            PowerRenderer.vert(x1 + sd[0] * w1 * off[k + 1], y1 + sd[1] * w1 * off[k + 1], z1 + sd[2] * w1 * off[k + 1], t, a1 * fa[k + 1]);
+            PowerRenderer.vert(x1 + sd[0] * w1 * off[k], y1 + sd[1] * w1 * off[k], z1 + sd[2] * w1 * off[k], t, a1 * fa[k]);
+        }
+    }
+
+    /** white-hot narrow ribbon for the core of a bolt */
+    private static void ribbonHot(float x0, float y0, float z0, float x1, float y1, float z1, float w, float a)
+    {
+        float dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
+        float mx = (x0 + x1) * 0.5F, my = (y0 + y1) * 0.5F, mz = (z0 + z1) * 0.5F;
+        float[] sd = cross(dx, dy, dz, mx, my, mz);
+        float l = (float) Math.sqrt(sd[0] * sd[0] + sd[1] * sd[1] + sd[2] * sd[2]);
+
+        if (l < 1e-6F)
+        {
+            return;
+        }
+
+        sd[0] /= l; sd[1] /= l; sd[2] /= l;
+
+        float[] off = {-1F, 0F, 1F};
+        float[] fa = {0F, 1F, 0F};
+
+        for (int k = 0; k < 2; k++)
+        {
+            PowerRenderer.vertHot(x0 + sd[0] * w * off[k], y0 + sd[1] * w * off[k], z0 + sd[2] * w * off[k], a * fa[k]);
+            PowerRenderer.vertHot(x0 + sd[0] * w * off[k + 1], y0 + sd[1] * w * off[k + 1], z0 + sd[2] * w * off[k + 1], a * fa[k + 1]);
+            PowerRenderer.vertHot(x1 + sd[0] * w * off[k + 1], y1 + sd[1] * w * off[k + 1], z1 + sd[2] * w * off[k + 1], a * fa[k + 1]);
+            PowerRenderer.vertHot(x1 + sd[0] * w * off[k], y1 + sd[1] * w * off[k], z1 + sd[2] * w * off[k], a * fa[k]);
+        }
     }
 
     /** rays in the camera plane (star flare) */
@@ -389,8 +423,25 @@ public final class RiftRenderer
                     float nz = z + (topz - z) * (1F - f) + (i == n ? 0F : jz);
                     float wd = W * 0.06F * (b == 0 ? 1F : 0.7F) * (0.6F + 0.4F * f);
 
-                    ribbon(px, py, pz, nx, ny, nz, wd * 4F, wd * 4F, 1F, 0.28F * vis, 0.28F * vis);   /* glow */
-                    ribbon(px, py, pz, nx, ny, nz, wd, wd, 0F, 0.95F * vis, 0.95F * vis);            /* core */
+                    float fl = 0.75F + 0.25F * PowerRenderer.hash(step * 1.9F + i * 0.7F + seed);       /* flicker */
+
+                    ribbon(px, py, pz, nx, ny, nz, wd * 9F, wd * 9F, 1F, 0.14F * vis * fl, 0.14F * vis * fl);   /* wide bloom */
+                    ribbon(px, py, pz, nx, ny, nz, wd * 3.5F, wd * 3.5F, 0.7F, 0.34F * vis * fl, 0.34F * vis * fl);  /* halo */
+                    ribbon(px, py, pz, nx, ny, nz, wd * 1.2F, wd * 1.2F, 0F, 0.95F * vis, 0.95F * vis);        /* core */
+                    ribbonHot(px, py, pz, nx, ny, nz, wd * 0.55F, vis);                                       /* white-hot */
+
+                    /* small side forks */
+                    if (i % 3 == 1 && PowerRenderer.hash(i * 2.1F + b * 6.7F + step + seed) > 0.35F)
+                    {
+                        float side = PowerRenderer.hash(i * 8.3F + step + seed) < 0.5F ? -1F : 1F;
+                        float fx = nx + side * H * (0.04F + 0.05F * PowerRenderer.hash(i * 4.4F + step));
+                        float fy = ny - H * 0.06F;
+                        float fz = nz + (PowerRenderer.hash(i * 5.9F + step) - 0.5F) * H * 0.05F;
+
+                        ribbon(nx, ny, nz, fx, fy, fz, wd * 1.8F, wd * 0.3F, 0.6F, 0.35F * vis * fl, 0.0F);
+                        ribbon(nx, ny, nz, fx, fy, fz, wd * 0.5F, wd * 0.1F, 0F, 0.8F * vis, 0F);
+                    }
+
                     px = nx; py = ny; pz = nz;
                 }
             }
@@ -429,15 +480,23 @@ public final class RiftRenderer
     private static void glowDisc(float x, float y, float z, float r, float a)
     {
         int n = 28;
+        int rings = 5;
 
-        for (int i = 0; i < n; i++)
+        for (int k = 0; k < rings; k++)
         {
-            float a0 = i * 6.2832F / n, a1 = (i + 1) * 6.2832F / n;
+            float r0 = (float) k / rings, r1 = (float) (k + 1) / rings;
+            float f0 = PowerRenderer.falloff(r0), f1 = k + 1 == rings ? 0F : PowerRenderer.falloff(r1);
 
-            PowerRenderer.vert(x, y, z, 0F, a);
-            PowerRenderer.vert(x, y, z, 0F, a);
-            PowerRenderer.vert(x + (float) Math.cos(a1) * r, y, z + (float) Math.sin(a1) * r, 1F, 0F);
-            PowerRenderer.vert(x + (float) Math.cos(a0) * r, y, z + (float) Math.sin(a0) * r, 1F, 0F);
+            for (int i = 0; i < n; i++)
+            {
+                float a0 = i * 6.2832F / n, a1 = (i + 1) * 6.2832F / n;
+                float c0 = (float) Math.cos(a0), s0 = (float) Math.sin(a0), c1 = (float) Math.cos(a1), s1 = (float) Math.sin(a1);
+
+                PowerRenderer.vert(x + c0 * r * r0, y, z + s0 * r * r0, r0, a * f0);
+                PowerRenderer.vert(x + c1 * r * r0, y, z + s1 * r * r0, r0, a * f0);
+                PowerRenderer.vert(x + c1 * r * r1, y, z + s1 * r * r1, r1, a * f1);
+                PowerRenderer.vert(x + c0 * r * r1, y, z + s0 * r * r1, r1, a * f1);
+            }
         }
     }
 

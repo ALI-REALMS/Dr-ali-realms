@@ -164,41 +164,69 @@ public final class PowerRenderer
         Gfx.v(m, x, y, z, cr + (er - cr) * t, cg + (eg - cg) * t, cb + (eb - cb) * t, a * gain);
     }
 
-    /** camera facing soft glow disc */
+    /** white-hot vertex (blend of white into the core colour) */
+    static void vertHot(float x, float y, float z, float a)
+    {
+        Gfx.v(m, x, y, z, 0.6F + cr * 0.4F, 0.6F + cg * 0.4F, 0.6F + cb * 0.4F, a * gain);
+    }
+
+    /** gaussian-like falloff 0..1 -> alpha factor */
+    static float falloff(float r)
+    {
+        return (float) Math.exp(-3.2F * r * r) * (1F - r * r * r);
+    }
+
+    /** camera facing soft glow disc (smooth, bloom-like falloff built from rings) */
     static void glow(float x, float y, float z, float size, float t, float alpha)
     {
-        int n = 14;
+        int n = 16;
+        int rings = 5;
 
-        for (int i = 0; i < n; i++)
+        for (int k = 0; k < rings; k++)
         {
-            float a0 = i * TAU / n, a1 = (i + 1) * TAU / n;
-            float x0 = (camRight.x * (float) Math.cos(a0) + camUp.x * (float) Math.sin(a0)) * size;
-            float y0 = (camRight.y * (float) Math.cos(a0) + camUp.y * (float) Math.sin(a0)) * size;
-            float z0 = (camRight.z * (float) Math.cos(a0) + camUp.z * (float) Math.sin(a0)) * size;
-            float x1 = (camRight.x * (float) Math.cos(a1) + camUp.x * (float) Math.sin(a1)) * size;
-            float y1 = (camRight.y * (float) Math.cos(a1) + camUp.y * (float) Math.sin(a1)) * size;
-            float z1 = (camRight.z * (float) Math.cos(a1) + camUp.z * (float) Math.sin(a1)) * size;
+            float r0 = (float) k / rings, r1 = (float) (k + 1) / rings;
+            float f0 = falloff(r0), f1 = k + 1 == rings ? 0F : falloff(r1);
+            float tt0 = t * r0, tt1 = t * r1;
 
-            vert(x, y, z, 0F, alpha);
-            vert(x, y, z, 0F, alpha);
-            vert(x + x1, y + y1, z + z1, t, 0F);
-            vert(x + x0, y + y0, z + z0, t, 0F);
+            for (int i = 0; i < n; i++)
+            {
+                float a0 = i * TAU / n, a1 = (i + 1) * TAU / n;
+                float c0 = (float) Math.cos(a0), s0 = (float) Math.sin(a0), c1 = (float) Math.cos(a1), s1 = (float) Math.sin(a1);
+
+                ring(x, y, z, size * r0, c0, s0, tt0, alpha * f0);
+                ring(x, y, z, size * r0, c1, s1, tt0, alpha * f0);
+                ring(x, y, z, size * r1, c1, s1, tt1, alpha * f1);
+                ring(x, y, z, size * r1, c0, s0, tt1, alpha * f1);
+            }
         }
+    }
+
+    private static void ring(float x, float y, float z, float rad, float c, float s, float t, float a)
+    {
+        vert(x + (camRight.x * c + camUp.x * s) * rad, y + (camRight.y * c + camUp.y * s) * rad, z + (camRight.z * c + camUp.z * s) * rad, t, a);
     }
 
     /** flat horizontal glow disc on the ground */
     private static void groundDisc(float x, float y, float z, float radius, float alpha)
     {
-        int n = 24;
+        int n = 28;
+        int rings = 5;
 
-        for (int i = 0; i < n; i++)
+        for (int k = 0; k < rings; k++)
         {
-            float a0 = i * TAU / n, a1 = (i + 1) * TAU / n;
+            float r0 = (float) k / rings, r1 = (float) (k + 1) / rings;
+            float f0 = falloff(r0), f1 = k + 1 == rings ? 0F : falloff(r1);
 
-            vert(x, y, z, 0F, alpha);
-            vert(x, y, z, 0F, alpha);
-            vert(x + (float) Math.cos(a1) * radius, y, z + (float) Math.sin(a1) * radius, 1F, 0F);
-            vert(x + (float) Math.cos(a0) * radius, y, z + (float) Math.sin(a0) * radius, 1F, 0F);
+            for (int i = 0; i < n; i++)
+            {
+                float a0 = i * TAU / n, a1 = (i + 1) * TAU / n;
+                float c0 = (float) Math.cos(a0), s0 = (float) Math.sin(a0), c1 = (float) Math.cos(a1), s1 = (float) Math.sin(a1);
+
+                vert(x + c0 * radius * r0, y, z + s0 * radius * r0, r0, alpha * f0);
+                vert(x + c1 * radius * r0, y, z + s1 * radius * r0, r0, alpha * f0);
+                vert(x + c1 * radius * r1, y, z + s1 * radius * r1, r1, alpha * f1);
+                vert(x + c0 * radius * r1, y, z + s0 * radius * r1, r1, alpha * f1);
+            }
         }
     }
 
