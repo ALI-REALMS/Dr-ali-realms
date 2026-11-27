@@ -184,8 +184,12 @@ final class Gfx
         RenderSystem.disableBlend();
     }
 
+    private static int count;
+
     static void begin()
     {
+        count = 0;
+
         if (late)
         {
             cur = new Batch(additive);
@@ -205,6 +209,7 @@ final class Gfx
             return;
         }
 
+        count++;
         buffer.vertex(m, x, y, z).color(clamp(r), clamp(g), clamp(b), clamp(a)).next();
     }
 
@@ -226,6 +231,15 @@ final class Gfx
 
             cur = null;
             return;
+        }
+
+        if (count == 0)
+        {
+            /* an empty batch would make BufferBuilder.end() throw: add one invisible quad */
+            for (int i = 0; i < 4; i++)
+            {
+                v(new Matrix4f(), 0F, 0F, 0F, 0F, 0F, 0F, 0F);
+            }
         }
 
         BufferRenderer.drawWithGlobalProgram(buffer.end());
