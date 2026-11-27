@@ -306,4 +306,313 @@ final class EnergyFx
 
         Gfx.end();
     }
+
+    /* ------------------------------------------------------------ extra types */
+
+    private static float ease(float v)
+    {
+        v = c01(v);
+
+        return v * v * (3F - 2F * v);
+    }
+
+    /** tiny camera-facing glowing square (ember / spark dot) */
+    private static void dot(float x, float y, float z, float size, float alpha)
+    {
+        if (alpha <= 0.01F)
+        {
+            return;
+        }
+
+        float rx = PowerRenderer.camRight.x * size, ry = PowerRenderer.camRight.y * size, rz = PowerRenderer.camRight.z * size;
+        float ux = PowerRenderer.camUp.x * size, uy = PowerRenderer.camUp.y * size, uz = PowerRenderer.camUp.z * size;
+
+        PowerRenderer.vertHot(x - rx - ux, y - ry - uy, z - rz - uz, alpha * 0.5F);
+        PowerRenderer.vertHot(x + rx - ux, y + ry - uy, z + rz - uz, alpha * 0.5F);
+        PowerRenderer.vertHot(x + rx + ux, y + ry + uy, z + rz + uz, alpha);
+        PowerRenderer.vertHot(x - rx + ux, y - ry + uy, z - rz + uz, alpha);
+    }
+
+    /** thin recursive twig (fine electric branches) */
+    private static void twig(float x, float y, float z, float dx, float dy, float dz, float len, float w, float alpha, int seed, int depth)
+    {
+        int n = 5;
+        float step = len / n;
+
+        for (int i = 0; i < n; i++)
+        {
+            dx += (h(i * 2.3F + seed) - 0.5F) * 1.3F;
+            dy += (h(i * 3.9F + seed + 5F) - 0.5F) * 1.3F;
+            dz += (h(i * 5.1F + seed + 9F) - 0.5F) * 1.3F;
+
+            float l = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (l < 1e-5F)
+            {
+                return;
+            }
+
+            dx /= l; dy /= l; dz /= l;
+
+            float nx = x + dx * step, ny = y + dy * step, nz = z + dz * step;
+            float f = 1F - (float) i / n;
+
+            RiftRenderer.ribbon(x, y, z, nx, ny, nz, w * 3F * f, w * 3F * f, 0.7F, alpha * 0.18F * f, alpha * 0.18F * f);
+            RiftRenderer.ribbon(x, y, z, nx, ny, nz, w * f, w * f, 0F, alpha * 0.9F * f, alpha * 0.9F * f);
+
+            if (depth > 0 && (i == 1 || i == 3))
+            {
+                twig(nx, ny, nz, dx + (h(i + seed * 0.7F) - 0.5F) * 2F, dy + (h(i + seed * 1.1F) - 0.5F) * 2F, dz + (h(i + seed * 1.9F) - 0.5F) * 2F,
+                    len * 0.5F, w * 0.7F, alpha * 0.8F, seed * 3 + i, depth - 1);
+            }
+
+            x = nx; y = ny; z = nz;
+        }
+    }
+
+    /** curly tendril (hook / spiral) at the ends of a bolt */
+    private static void curl(float x, float y, float z, int seed, float len, float w, float alpha)
+    {
+        float[] u = rnd(seed), v = rnd(seed + 17);
+        float a = h(seed) * TAU;
+        float step = len / 14F;
+
+        for (int i = 0; i < 14; i++)
+        {
+            a += 0.55F + 0.7F * h(i * 1.7F + seed);
+
+            float ca = (float) Math.cos(a), sa = (float) Math.sin(a);
+            float nx = x + (u[0] * ca + v[0] * sa) * step;
+            float ny = y + (u[1] * ca + v[1] * sa) * step;
+            float nz = z + (u[2] * ca + v[2] * sa) * step;
+            float f = 1F - i / 14F;
+
+            RiftRenderer.ribbon(x, y, z, nx, ny, nz, w * 2.5F * f, w * 2.5F * f, 0.7F, alpha * 0.2F * f, alpha * 0.2F * f);
+            RiftRenderer.ribbon(x, y, z, nx, ny, nz, w * f, w * f, 0F, alpha * 0.9F * f, alpha * 0.9F * f);
+
+            x = nx; y = ny; z = nz;
+            step *= 0.93F;
+        }
+    }
+
+    private static float[] rnd(int seed)
+    {
+        float x = h(seed * 1.3F) - 0.5F, y = h(seed * 2.7F + 3F) - 0.5F, z = h(seed * 4.1F + 7F) - 0.5F;
+        float l = (float) Math.sqrt(x * x + y * y + z * z);
+
+        return l < 1e-5F ? new float[] {1F, 0F, 0F} : new float[] {x / l, y / l, z / l};
+    }
+
+    /** sparks that fall with gravity and lie on the ground, emitted from a moving point */
+    private static void falling(float[] from, float[] to, float emitStart, float emitEnd, int count, float p, float secPerP, float W, float gy, float vis, int seed)
+    {
+        for (int k = 0; k < count; k++)
+        {
+            float tp = emitStart + (emitEnd - emitStart) * h(k * 1.3F + seed);
+            float age = (p - tp) * secPerP;
+
+            if (age < 0F || age > 1.6F)
+            {
+                continue;
+            }
+
+            float e = h(k * 2.1F + seed + 4F);
+            float ex = from[0] + (to[0] - from[0]) * e + (h(k * 3.3F + seed) - 0.5F) * W * 0.5F;
+            float ey = from[1] + (to[1] - from[1]) * e + (h(k * 4.7F + seed) - 0.5F) * W * 0.5F;
+            float ez = from[2] + (to[2] - from[2]) * e + (h(k * 5.9F + seed) - 0.5F) * W * 0.5F;
+            float vx = (h(k * 7.3F + seed) - 0.5F) * W * 2.2F, vy = h(k * 8.1F + seed) * W * 1.2F, vz = (h(k * 9.7F + seed) - 0.5F) * W * 2.2F;
+            float x = ex + vx * age, z = ez + vz * age;
+            float y = ey + vy * age - 4.5F * age * age;
+            boolean lying = y < gy + 0.01F;
+
+            y = Math.max(y, gy + 0.01F);
+
+            float life = lying ? 1.0F : 1.6F;
+            float a = Math.max(0F, 1F - age / life) * vis * (0.55F + 0.45F * h(k * 1.9F + (float) Math.floor(age * 18F)));
+
+            dot(x, y, z, 0.012F + 0.012F * h(k * 6.1F + seed), a);
+        }
+    }
+
+    /** type 8: electric sweep - a whip of electricity sweeping along a curve, fine twigs, curly ends, falling sparks, ground light */
+    static void sweep(RiftClip c, float x, float gy, float z, float cy, float rx, float rz, float p, float time, float L, float W, float jag, int sparks, int seed)
+    {
+        float vis = 1F - c01((p - 0.78F) / 0.22F);
+        float head = ease(p / 0.5F), tail = ease((p - 0.16F) / 0.5F);
+        float step = (float) Math.floor(time * 18F);
+        float secPerP = p > 0.001F ? time / p : 3F;
+        float t = (float) Math.toRadians(c.tilt.get());
+        float ax = rx * (float) Math.cos(t), ay = (float) Math.sin(t), az = rz * (float) Math.cos(t);
+        float[] A = {x - ax * L * 0.5F, cy - ay * L * 0.5F - L * 0.1F, z - az * L * 0.5F};
+        float[] B = {x + ax * L * 0.5F, cy + ay * L * 0.5F - L * 0.1F, z + az * L * 0.5F};
+        float[] C = {x, cy + L * 0.5F, z};
+
+        Gfx.blendAdd();
+        Gfx.begin();
+
+        if (head - tail > 0.01F && vis > 0.01F)
+        {
+            int n = 52;
+            float[][] pts = new float[n + 1][];
+            float w0 = Math.max(0.008F, W * 0.035F);
+
+            for (int i = 0; i <= n; i++)
+            {
+                float s = tail + (head - tail) * i / n;
+                float u = 1F - s;
+                float amp = W * 0.22F * jag * (0.5F + 0.5F * (float) Math.sin(Math.PI * i / n));
+
+                pts[i] = new float[] {
+                    u * u * A[0] + 2F * u * s * C[0] + s * s * B[0] + (h(i * 1.7F + step * 3.1F + seed) - 0.5F) * amp,
+                    u * u * A[1] + 2F * u * s * C[1] + s * s * B[1] + (h(i * 2.9F + step * 1.3F + seed + 3F) - 0.5F) * amp,
+                    u * u * A[2] + 2F * u * s * C[2] + s * s * B[2] + (h(i * 4.3F + step * 2.1F + seed + 8F) - 0.5F) * amp
+                };
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                float f = (float) i / n;
+                float env = (float) Math.pow(Math.sin(Math.PI * (f + 0.5F / n)), 0.5F);
+                float a = vis * (0.55F + 0.45F * f) * env;
+                float w = w0 * (0.4F + 0.6F * env);
+                float[] a0 = pts[i], b0 = pts[i + 1];
+
+                RiftRenderer.ribbon(a0[0], a0[1], a0[2], b0[0], b0[1], b0[2], w * 9F, w * 9F, 1F, a * 0.12F, a * 0.12F);
+                RiftRenderer.ribbon(a0[0], a0[1], a0[2], b0[0], b0[1], b0[2], w * 3F, w * 3F, 0.6F, a * 0.35F, a * 0.35F);
+                RiftRenderer.ribbon(a0[0], a0[1], a0[2], b0[0], b0[1], b0[2], w, w, 0F, a, a);
+                RiftRenderer.ribbonHot(a0[0], a0[1], a0[2], b0[0], b0[1], b0[2], w * 0.45F, a);
+
+                /* fine twigs */
+                float r = h(i * 5.3F + step * 1.9F + seed);
+
+                if (r > 0.45F)
+                {
+                    float[] d = rnd((int) (step * 13F) + i * 7 + seed);
+
+                    twig(a0[0], a0[1], a0[2], d[0], d[1], d[2], W * (0.25F + 0.55F * h(r * 99F)), w * 0.45F, a * 0.9F, i * 11 + (int) step + seed, 1);
+                }
+            }
+
+            /* curly ends */
+            curl(pts[n][0], pts[n][1], pts[n][2], (int) step * 5 + seed, W * 1.5F, w0 * 0.6F, vis);
+            curl(pts[0][0], pts[0][1], pts[0][2], (int) step * 7 + seed + 3, W * 1.1F, w0 * 0.5F, vis * 0.8F);
+
+            /* light: glow at the head, light spot and reflection on the ground */
+            float[] hp = pts[n];
+
+            PowerRenderer.glow(hp[0], hp[1], hp[2], W * 1.8F, 0.6F, 0.55F * vis);
+            PowerRenderer.glow(hp[0], hp[1], hp[2], W * 0.5F, 0F, 0.9F * vis);
+            RiftRenderer.glowDisc(hp[0], gy + 0.01F, hp[2], W * 3.2F, 0.38F * vis);
+
+            for (int i = 0; i < n; i += 6)
+            {
+                RiftRenderer.glowDisc(pts[i][0], gy + 0.01F, pts[i][2], W * 1.2F, 0.12F * vis * (float) i / n);
+            }
+        }
+
+        /* the small sparks that rain down where the bolt passed */
+        float[] from = {A[0], A[1], A[2]}, to = {B[0], B[1], B[2]};
+
+        falling(from, to, 0.04F, 0.55F, sparks * 5, p, secPerP, W, gy, 1F, seed);
+
+        Gfx.end();
+    }
+
+    /** type 9: plasma / tesla orb */
+    static void orb(RiftClip c, float x, float gy, float z, float cy, float p, float time, float W, float jag, int sparks, int seed)
+    {
+        float vis = c01(p / 0.08F) * (1F - c01((p - 0.78F) / 0.22F));
+
+        if (vis <= 0.01F)
+        {
+            return;
+        }
+
+        float pulse = 0.85F + 0.15F * (float) Math.sin(time * 6.2832F * 2F);
+        float step = (float) Math.floor(time * 16F);
+        float R = W * (0.6F + 0.1F * pulse) * (0.6F + 0.4F * c01(p / 0.15F));
+
+        Gfx.blendAdd();
+        Gfx.begin();
+
+        PowerRenderer.glow(x, cy, z, R * 4.5F, 0.8F, 0.3F * vis);
+        PowerRenderer.glow(x, cy, z, R * 2.2F, 0.4F, 0.6F * vis * pulse);
+        PowerRenderer.glow(x, cy, z, R * 1.1F, 0.1F, 0.95F * vis);
+        PowerRenderer.glow(x, cy, z, R * 0.6F, 0F, 1F * vis);
+        RiftRenderer.glowDisc(x, gy + 0.01F, z, R * 5F, 0.35F * vis);
+
+        /* orbiting rings */
+        for (int k = 0; k < 3; k++)
+        {
+            float tilt = k * 1.05F + 0.4F, spin = time * (1.2F + 0.5F * k) * (k % 2 == 0 ? 1F : -1F);
+            int n = 48;
+            float px = 0, py = 0, pz = 0;
+
+            for (int i = 0; i <= n; i++)
+            {
+                float a = i * TAU / n + spin;
+                float lx = (float) Math.cos(a) * R * 1.5F, ly = (float) Math.sin(a) * R * 1.5F;
+                float wx = x + lx, wy = cy + ly * (float) Math.cos(tilt), wz = z + ly * (float) Math.sin(tilt);
+
+                if (i > 0)
+                {
+                    float f = 0.5F + 0.5F * (float) Math.sin(a * 2F + time * 3F);
+
+                    RiftRenderer.ribbon(px, py, pz, wx, wy, wz, W * 0.05F, W * 0.05F, 0.7F, 0.25F * vis * f, 0.25F * vis * f);
+                    RiftRenderer.ribbon(px, py, pz, wx, wy, wz, W * 0.014F, W * 0.014F, 0F, 0.9F * vis * f, 0.9F * vis * f);
+                }
+
+                px = wx; py = wy; pz = wz;
+            }
+        }
+
+        /* arcs from the core to the surroundings, re-rolled 16x per second */
+        for (int k = 0; k < 8; k++)
+        {
+            float rs = step * 5.3F + k * 2.9F + seed;
+
+            if (h(rs) < 0.15F)
+            {
+                continue;
+            }
+
+            float th = h(rs + 1F) * TAU, cp = h(rs + 2F) * 2F - 1F;
+            float sn = (float) Math.sqrt(Math.max(0F, 1F - cp * cp));
+            float rr = R * (1.8F + 2.2F * h(rs + 3F));
+
+            arc(x, cy, z, x + sn * (float) Math.cos(th) * rr, cy + cp * rr, z + sn * (float) Math.sin(th) * rr, (int) (rs * 10F),
+                Math.max(0.006F, W * 0.014F), vis * (0.6F + 0.4F * h(rs + 4F)), true);
+        }
+
+        streaks(x, cy, z, sparks * 2, R * 3F, 0.6F, 1.2F, time, seed, W * 0.015F, vis, 0F);
+        ring(x, gy + 0.01F, z, R * 3F, W * 0.05F, 0.6F * vis, time, seed);
+
+        Gfx.end();
+    }
+
+    /** type 10: spark shower - dense upward streaks and falling embers, ground light */
+    static void shower(RiftClip c, float x, float gy, float z, float cy, float p, float time, float L, float W, int sparks, int seed)
+    {
+        float vis = c01(p / 0.05F) * (1F - c01((p - 0.75F) / 0.25F));
+
+        if (vis <= 0.01F)
+        {
+            return;
+        }
+
+        float secPerP = p > 0.001F ? time / p : 3F;
+        float[] o = {x, cy, z};
+
+        Gfx.blendAdd();
+        Gfx.begin();
+
+        PowerRenderer.glow(x, cy, z, W * 1.6F, 0.6F, 0.5F * vis);
+        PowerRenderer.glow(x, cy, z, W * 0.5F, 0F, 0.9F * vis);
+        RiftRenderer.glowDisc(x, gy + 0.01F, z, W * 3F, 0.4F * vis);
+        streaks(x, cy, z, sparks * 4, L * 1.2F, 1.3F, 1.4F, time, seed, W * 0.02F, vis, 0.85F);
+        falling(o, o, 0.0F, 0.6F, sparks * 6, p, secPerP, W * 2F, gy, vis, seed + 3);
+        ring(x, gy + 0.01F, z, W * 1.2F, W * 0.05F, 0.7F * vis, time, seed);
+
+        Gfx.end();
+    }
 }

@@ -398,6 +398,9 @@ public final class RiftRenderer
             case 4: cracksOnly(x, y, z, p, time, L, W, sparks, seed); break;
             case 5: vortex(x, y, z, p, time, W, jag, sparks, seed); break;
             case 7: EnergyFx.burst(c, x, y - c.offY.get() + 0.03F, z, y, p, time, L, W, jag, sparks, seed, vr, vg, vb); break;
+            case 8: EnergyFx.sweep(c, x, y - c.offY.get() + 0.02F, z, y, rx, rz, p, time, L, W, jag, sparks, seed); break;
+            case 9: EnergyFx.orb(c, x, y - c.offY.get() + 0.02F, z, y, p, time, W, jag, sparks, seed); break;
+            case 10: EnergyFx.shower(c, x, y - c.offY.get() + 0.02F, z, y, p, time, L, W, sparks, seed); break;
             default: slit(c, x, y, z, rx, rz, p, time, L, W, jag, sparks, seed); break;
         }
     }

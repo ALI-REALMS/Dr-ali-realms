@@ -4,7 +4,8 @@ public final class RiftPresets
 {
     public static final String[] NAMES = {
         "Purple space rift", "Red hell crack", "Blue dimension tear", "Green toxic portal", "Golden cracks", "Black void",
-        "Blue lightning strike", "Gold lightning + cracks", "Ground cracks (dark)", "Wind shred orb", "Orange light slit", "Magenta energy burst", "Blue plasma burst", "Fire burst"
+        "Blue lightning strike", "Gold lightning + cracks", "Ground cracks (dark)", "Wind shred orb", "Orange light slit", "Magenta energy burst", "Blue plasma burst", "Fire burst",
+        "Electric sweep (orange)", "Electric sweep (blue)", "Plasma orb", "Spark shower"
     };
 
     private RiftPresets() {}
@@ -71,6 +72,22 @@ public final class RiftPresets
             case 13:
                 c.type.set(7); c.core.set(0xFFF2B0); c.edge.set(0xFF7A10); c.voidColor.set(0xC01800);
                 c.offY.set(0.05F); c.dist.set(3F); c.length.set(3.5F); c.width.set(1.2F); c.sparks.set(70);
+                break;
+            case 14:
+                c.type.set(8); c.core.set(0xFFFFFF); c.edge.set(0xFF9A3A); c.voidColor.set(0x000000);
+                c.offY.set(1.4F); c.dist.set(3.5F); c.tilt.set(10F); c.length.set(4F); c.width.set(0.55F); c.jagged.set(1F); c.sparks.set(60);
+                break;
+            case 15:
+                c.type.set(8); c.core.set(0xFFFFFF); c.edge.set(0x3DA5FF); c.voidColor.set(0x000000);
+                c.offY.set(1.4F); c.dist.set(3.5F); c.tilt.set(-15F); c.length.set(4.5F); c.width.set(0.55F); c.jagged.set(1F); c.sparks.set(60);
+                break;
+            case 16:
+                c.type.set(9); c.core.set(0xFFFFFF); c.edge.set(0xB04BFF); c.voidColor.set(0x000000);
+                c.offY.set(1.4F); c.dist.set(2.5F); c.width.set(0.6F); c.sparks.set(40);
+                break;
+            case 17:
+                c.type.set(10); c.core.set(0xFFF0C0); c.edge.set(0xFF8A20); c.voidColor.set(0x000000);
+                c.offY.set(0.1F); c.dist.set(3F); c.length.set(3F); c.width.set(0.6F); c.sparks.set(50);
                 break;
             default:
                 break;
