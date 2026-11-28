@@ -32,7 +32,7 @@ jobs:
               fapi:*) javap -p -cp "$FJ" "${line#fapi:}" ;;
               ls:*) grep -E "${line#ls:}" ms.txt | head -60; grep -E "${line#ls:}" fj.txt | head -40 ;;
               sig:*) for f in $(grep -E "${line#sig:}" ms.txt | head -8); do echo "--- $f"; unzip -p "$MS" "$f" | grep -E "^    [^ /*@}].*[;{]$" | head -120; done ;;
-              *) for f in $(grep -E "$line" ms.txt | head -4); do echo "--- $f"; unzip -p "$MS" "$f" | head -400; done ;;
+              *) for f in $(grep -E "$line" ms.txt | head -4); do echo "--- $f"; unzip -p "$MS" "$f" | head -330; done ;;
             esac
           done < dump-request.txt
       - uses: actions/upload-artifact@v4
