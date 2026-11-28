@@ -14,8 +14,8 @@ public class ImpactClip extends CameraClip
     public final ValueInt mode = new ValueInt("mode", 0, 0, 4);
     public final ValueInt bg = new ValueInt("bg", 0xFFFFFF);
     public final ValueInt ink = new ValueInt("ink", 0x000000);
-    /** character colour: 0 fixed, 1 auto contrast vs backdrop, 2 invert backdrop */
-    public final ValueFloat charMode = new ValueFloat("charMode", 0F, 0F, 2F);
+    /** character colour: 0 fixed, 1 auto contrast, 2 invert backdrop, 3 real character inverted */
+    public final ValueFloat charMode = new ValueFloat("charMode", 3F, 0F, 3F);
     public final ValueInt inkAlt = new ValueInt("inkAlt", 0xFFFFFF);
     public final ValueInt accent = new ValueInt("accent", 0x000000);
     public final ValueInt starColor = new ValueInt("starColor", 0x000000);
