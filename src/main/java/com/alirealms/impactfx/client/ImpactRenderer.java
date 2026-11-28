@@ -186,6 +186,10 @@ public final class ImpactRenderer
         u4("P3", c.starCount.get(), c.starSize.get(), c.starSeed.get(), c.starRate.get());
         u4("P4", c.speedLines.get(), c.shockwave.get(), c.inkBurst.get(), c.flash.get());
         u4("P5", c.centerX.get(), c.centerY.get(), c.grain.get(), c.posterize.get());
+        u4("P6", c.shape.get(), c.shapeScale.get(), c.shapeSpeed.get(), c.shapeDensity.get());
+        u4("P7", c.shapeGlow.get(), (float) Math.toRadians(c.shapeRot.get()), c.shapeFill.get(), 0F);
+        color("ColS1", c.shapeCol1.get());
+        color("ColS2", c.shapeCol2.get());
         color("ColBg", c.bg.get());
         color("ColInk", c.ink.get());
         color("ColAccent", c.accent.get());

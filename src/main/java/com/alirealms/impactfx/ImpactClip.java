@@ -40,6 +40,17 @@ public class ImpactClip extends CameraClip
     public final ValueFloat centerX = new ValueFloat("centerX", 0.5F, 0F, 1F);
     public final ValueFloat centerY = new ValueFloat("centerY", 0.5F, 0F, 1F);
 
+    /** overlay shape: 0 none, 1 starburst, 2 lightning burst, 3 light rain, 4 speed lines + splats, 5 radial ink, 6 diagonal ink, 7 ink eye */
+    public final ValueInt shape = new ValueInt("shape", 0, 0, 7);
+    public final ValueFloat shapeScale = new ValueFloat("shapeScale", 1F, 0.2F, 3F);
+    public final ValueFloat shapeSpeed = new ValueFloat("shapeSpeed", 1F, 0F, 5F);
+    public final ValueFloat shapeDensity = new ValueFloat("shapeDensity", 1F, 0.2F, 3F);
+    public final ValueFloat shapeGlow = new ValueFloat("shapeGlow", 1F, 0F, 3F);
+    public final ValueFloat shapeRot = new ValueFloat("shapeRot", 0F, -180F, 180F);
+    public final ValueFloat shapeFill = new ValueFloat("shapeFill", 1F, 0F, 1F);
+    public final ValueInt shapeCol1 = new ValueInt("shapeCol1", 0xFFFFFF);
+    public final ValueInt shapeCol2 = new ValueInt("shapeCol2", 0xFFFFFF);
+
     public ImpactClip()
     {
         super();
@@ -68,6 +79,15 @@ public class ImpactClip extends CameraClip
         this.add(this.flash);
         this.add(this.centerX);
         this.add(this.centerY);
+        this.add(this.shape);
+        this.add(this.shapeScale);
+        this.add(this.shapeSpeed);
+        this.add(this.shapeDensity);
+        this.add(this.shapeGlow);
+        this.add(this.shapeRot);
+        this.add(this.shapeFill);
+        this.add(this.shapeCol1);
+        this.add(this.shapeCol2);
 
         this.title.set(ImpactAddon.IMPACT_LABEL);
         this.duration.set(10);

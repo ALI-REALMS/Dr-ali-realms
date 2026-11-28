@@ -77,6 +77,28 @@
    ]
   },
   {
+   "name": "P6",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "P7",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
    "name": "ColBg",
    "type": "float",
    "count": 4,
@@ -111,6 +133,28 @@
   },
   {
    "name": "ColStar",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ColS1",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ColS2",
    "type": "float",
    "count": 4,
    "values": [

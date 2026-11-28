@@ -3,7 +3,8 @@ package com.alirealms.impactfx;
 public final class Presets
 {
     public static final String[] NAMES = {
-        "Charcoal Slam", "Color Swap (aura)", "Manga Speed Lines", "Spider-Verse Pop", "White Flash Hit", "Negative Shock"
+        "Charcoal Slam", "Color Swap (aura)", "Manga Speed Lines", "Spider-Verse Pop", "White Flash Hit", "Negative Shock",
+        "Starburst Zoom", "Lightning Burst", "Light Rain", "Anime Splat Burst", "Manga Radial Ink", "Diagonal Ink Slash", "Ink Eye Burst"
     };
 
     private Presets() {}
@@ -18,6 +19,8 @@ public final class Presets
         c.starCount.set(0); c.starSize.set(0.03F); c.starRate.set(6F);
         c.speedLines.set(0F); c.shockwave.set(0F); c.inkBurst.set(0F); c.flash.set(0F);
         c.centerX.set(0.5F); c.centerY.set(0.5F);
+        c.shape.set(0); c.shapeScale.set(1F); c.shapeSpeed.set(1F); c.shapeDensity.set(1F); c.shapeGlow.set(1F);
+        c.shapeRot.set(0F); c.shapeFill.set(1F); c.shapeCol1.set(0xFFFFFF); c.shapeCol2.set(0xFFFFFF);
 
         switch (i)
         {
@@ -50,6 +53,34 @@ public final class Presets
                 c.mode.set(2); c.bg.set(0xFFFFFF); c.ink.set(0x000000);
                 c.accent.set(0xFF0000); c.shockwave.set(0.8F); c.distort.set(0.8F);
                 c.starCount.set(10); c.starColor.set(0xFFFFFF);
+                break;
+            case 6: /* Starburst Zoom */
+                c.shape.set(1); c.bg.set(0x000000); c.ink.set(0x05060A); c.shapeCol1.set(0xFFFFFF); c.shapeCol2.set(0xFFD9A0);
+                c.shapeFill.set(0.95F); c.grain.set(0.1F); c.duration.set(16);
+                break;
+            case 7: /* Lightning Burst */
+                c.shape.set(2); c.bg.set(0x000000); c.ink.set(0x05060A); c.shapeCol1.set(0xFFFFFF); c.shapeCol2.set(0x6FB6FF);
+                c.shapeFill.set(0.95F); c.grain.set(0.1F); c.flash.set(0.6F); c.duration.set(14);
+                break;
+            case 8: /* Light Rain */
+                c.shape.set(3); c.bg.set(0x000000); c.ink.set(0x05060A); c.shapeCol1.set(0xFFFFFF); c.shapeCol2.set(0x8FA8FF);
+                c.shapeFill.set(0.9F); c.grain.set(0.1F); c.duration.set(20);
+                break;
+            case 9: /* Anime Splat Burst */
+                c.shape.set(4); c.bg.set(0x000000); c.ink.set(0x05060A); c.shapeCol1.set(0xFFFFFF); c.shapeCol2.set(0xFFE9A0);
+                c.shapeFill.set(1F); c.grain.set(0.1F); c.duration.set(12);
+                break;
+            case 10: /* Manga Radial Ink */
+                c.shape.set(5); c.ink.set(0x000000); c.shapeCol1.set(0x000000); c.shapeCol2.set(0xFFFFFF);
+                c.shapeFill.set(1F); c.grain.set(0.15F); c.duration.set(10);
+                break;
+            case 11: /* Diagonal Ink Slash */
+                c.shape.set(6); c.ink.set(0x000000); c.shapeCol1.set(0x000000); c.shapeCol2.set(0xFFFFFF);
+                c.shapeRot.set(35F); c.shapeFill.set(1F); c.grain.set(0.15F); c.duration.set(10);
+                break;
+            case 12: /* Ink Eye Burst */
+                c.shape.set(7); c.ink.set(0x000000); c.accent.set(0xFF5A1F); c.shapeCol1.set(0x1A0A06); c.shapeCol2.set(0xFFFFFF);
+                c.shapeFill.set(1F); c.grain.set(0.15F); c.duration.set(12);
                 break;
             default:
                 break;
