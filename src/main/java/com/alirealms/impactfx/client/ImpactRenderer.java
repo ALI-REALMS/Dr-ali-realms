@@ -95,8 +95,29 @@ public final class ImpactRenderer
     {
         if (Compat.iris())
         {
+            Gfx.flushLate(hudTarget());
             run(true);
         }
+    }
+
+    /** the framebuffer the finished image is in: BBS's own one in the editor preview, the main one otherwise */
+    private static Framebuffer hudTarget()
+    {
+        Framebuffer main = MinecraftClient.getInstance().getFramebuffer();
+
+        try
+        {
+            Framebuffer fb = mchorse.bbs_mod.client.BBSRendering.getFramebuffer();
+
+            if (fb != null && fb != main && mchorse.bbs_mod.client.BBSRendering.isCustomSize())
+            {
+                return fb;
+            }
+        }
+        catch (Throwable ignored)
+        {}
+
+        return main;
     }
 
     private static void u4(String name, float a, float b, float c, float d)

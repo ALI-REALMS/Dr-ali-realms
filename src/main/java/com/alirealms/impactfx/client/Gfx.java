@@ -56,6 +56,7 @@ final class Gfx
 
     static void initLate()
     {
+        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.START_MAIN.register((context) -> clearLate());
     }
 
     static float partial(WorldRenderContext context)
@@ -141,36 +142,109 @@ final class Gfx
             return;
         }
 
-        RenderPipeline p = pipe ? add : normal;
+        if (Compat.iris())
+        {
+            /* shader pack: keep the geometry and draw it from the InGameHud mixin, after the pack's final pass */
+            try (built)
+            {
+                java.nio.ByteBuffer src = built.getBuffer();
+                java.nio.ByteBuffer copy = java.nio.ByteBuffer.allocateDirect(src.remaining()).order(src.order());
+
+                copy.put(src.duplicate());
+                copy.flip();
+
+                if (queued.size() > 4000)
+                {
+                    queued.clear();
+                }
+
+                queued.add(new Queued(copy, built.getDrawParameters().mode(), built.getDrawParameters().indexCount(), pipe, new Matrix4f(proj)));
+            }
+
+            return;
+        }
 
         try (built)
         {
-            GpuBuffer vb = p.getVertexFormat().uploadImmediateVertexBuffer(built.getBuffer());
-            RenderSystem.ShapeIndexBuffer shape = RenderSystem.getSequentialBuffer(built.getDrawParameters().mode());
-            GpuBuffer ib = shape.getIndexBuffer(built.getDrawParameters().indexCount());
-            Framebuffer fb = MinecraftClient.getInstance().getFramebuffer();
-            GpuBuffer ubo;
-
-            try (MemoryStack stack = MemoryStack.stackPush())
-            {
-                Std140Builder b = Std140Builder.onStack(stack, 64);
-
-                b.putMat4f(proj);
-                ubo = RenderSystem.getDevice().createBuffer(() -> "impactfx glow", GpuBuffer.USAGE_UNIFORM, b.get());
-            }
-
-            try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder()
-                .createRenderPass(() -> "impactfx glow", fb.getColorAttachmentView(), OptionalInt.empty()))
-            {
-                pass.setPipeline(p);
-                pass.setUniform("GlowData", ubo);
-                pass.setVertexBuffer(0, vb);
-                pass.setIndexBuffer(ib, shape.getIndexType());
-                pass.drawIndexed(0, 0, built.getDrawParameters().indexCount(), 1);
-            }
-
-            ubo.close();
+            draw(built.getBuffer(), built.getDrawParameters().mode(), built.getDrawParameters().indexCount(), pipe, proj,
+                MinecraftClient.getInstance().getFramebuffer());
         }
+    }
+
+    private static final class Queued
+    {
+        final java.nio.ByteBuffer data;
+        final VertexFormat.DrawMode mode;
+        final int indexCount;
+        final boolean add;
+        final Matrix4f proj;
+
+        Queued(java.nio.ByteBuffer data, VertexFormat.DrawMode mode, int indexCount, boolean add, Matrix4f proj)
+        {
+            this.data = data;
+            this.mode = mode;
+            this.indexCount = indexCount;
+            this.add = add;
+            this.proj = proj;
+        }
+    }
+
+    private static final java.util.List<Queued> queued = new java.util.ArrayList<>();
+
+    /** draws what was recorded while a shader pack was active; target = framebuffer holding the finished image */
+    static void flushLate(Framebuffer target)
+    {
+        if (queued.isEmpty())
+        {
+            return;
+        }
+
+        for (Queued q : queued)
+        {
+            draw(q.data.duplicate().order(q.data.order()), q.mode, q.indexCount, q.add, q.proj, target);
+        }
+
+        queued.clear();
+    }
+
+    static void clearLate()
+    {
+        queued.clear();
+    }
+
+    private static void draw(java.nio.ByteBuffer data, VertexFormat.DrawMode mode, int indexCount, boolean additivePipe, Matrix4f projection, Framebuffer fb)
+    {
+        RenderPipeline p = additivePipe ? add : normal;
+
+        if (p == null)
+        {
+            return;
+        }
+
+        GpuBuffer vb = p.getVertexFormat().uploadImmediateVertexBuffer(data);
+        RenderSystem.ShapeIndexBuffer shape = RenderSystem.getSequentialBuffer(mode);
+        GpuBuffer ib = shape.getIndexBuffer(indexCount);
+        GpuBuffer ubo;
+
+        try (MemoryStack stack = MemoryStack.stackPush())
+        {
+            Std140Builder b = Std140Builder.onStack(stack, 64);
+
+            b.putMat4f(projection);
+            ubo = RenderSystem.getDevice().createBuffer(() -> "impactfx glow", GpuBuffer.USAGE_UNIFORM, b.get());
+        }
+
+        try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder()
+            .createRenderPass(() -> "impactfx glow", fb.getColorAttachmentView(), OptionalInt.empty()))
+        {
+            pass.setPipeline(p);
+            pass.setUniform("GlowData", ubo);
+            pass.setVertexBuffer(0, vb);
+            pass.setIndexBuffer(ib, shape.getIndexType());
+            pass.drawIndexed(0, 0, indexCount, 1);
+        }
+
+        ubo.close();
     }
 
     private static int clamp(float v)
