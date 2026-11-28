@@ -18,5 +18,5 @@ jobs:
         run: gradle build --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: impactfx-mc1.20.1
+          name: impactfx-mc1.20.4
           path: build/libs/*.jar

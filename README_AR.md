@@ -7,10 +7,10 @@
 ## الخطوات (من الموبايل أو الكمبيوتر)
 1. افتح github.com وسجّل الدخول (ALI-REALMS) ← **New repository** ← اسمه `impactfx` ← Create.
 2. ارفع كل محتويات هذا المجلد (Upload files). **مهم:** يجب أن يظهر المجلد `.github` — إذا لم يرفعه المتصفح، اضغط Add file ← Create new file واكتب الاسم `.github/workflows/build.yml` والصق محتوى الملف.
-3. ادخل مجلد `libs` ← Add file ← Upload files ← ارفع ملف BBS وسمّه **bbs-2.7-1.20.1.jar**.
+3. ادخل مجلد `libs` ← Add file ← Upload files ← ارفع ملف BBS وسمّه **bbs-2.7-1.20.4.jar**.
 4. اذهب إلى تبويب **Actions**. البناء يبدأ تلقائياً (أو Run workflow).
 5. إذا نجح (علامة خضراء): افتح التشغيل ← أسفل الصفحة **Artifacts** ← حمّل `impactfx-jar` ← فك الضغط.
-6. ضع `impactfx-1.0.0.jar` في مجلد mods مع BBS و Fabric API (ماينكرافت 1.20.1).
+6. ضع `impactfx-1.0.0.jar` في مجلد mods مع BBS و Fabric API (ماينكرافت 1.20.4).
 7. افتح فيلم في BBS ← تايم لاين الكاميرا ← أضف كليب **Impact frame**.
 8. إذا فشل البناء (علامة حمراء): افتح الخطوة الحمراء وانسخ رسالة الخطأ وأرسلها لي لأصلحها.
 
