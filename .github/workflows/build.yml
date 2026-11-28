@@ -18,7 +18,7 @@ jobs:
         run: gradle build --stacktrace || true
       - name: Print requested sources
         run: |
-          gradle genSources --stacktrace > /dev/null 2>&1 || true
+          gradle genSources --stacktrace 2>&1 | tail -25 || true; find / -name "*sources*.jar" -size +1M 2>/dev/null | head; find ~/.gradle -name "fabric-rendering-v1*" | head
           MS=$(find ~/.gradle -name "minecraft-merged-1.21.11*sources.jar" | head -1)
           FS=$(find ~/.gradle -name "fabric-rendering-v1*sources.jar" | head -1)
           echo "MS=$MS FS=$FS"
