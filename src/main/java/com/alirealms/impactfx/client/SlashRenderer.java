@@ -72,14 +72,19 @@ public final class SlashRenderer
 
         for (SlashClip clip : clips)
         {
-            if (!clip.enabled.get() || !clip.isInside(tick))
+            int duration = Math.max(1, clip.duration.get());
+            float rel = (tick - clip.tick.get()) + partial;
+            boolean inside = clip.isInside(tick);
+
+            /* the follow-hand trail keeps fading out after the clip ends instead of vanishing */
+            boolean linger = !inside && clip.type.get() == 6 && rel > duration && rel < duration + 2F + clip.tail.get() * 14F;
+
+            if (!clip.enabled.get() || (!inside && !linger))
             {
                 continue;
             }
 
-            int duration = Math.max(1, clip.duration.get());
-            float rel = (tick - clip.tick.get()) + partial;
-            float amount = clip.envelope.factorEnabled(duration, rel);
+            float amount = linger ? 1F : clip.envelope.factorEnabled(duration, rel);
 
             if (amount <= 0.001F)
             {
@@ -135,9 +140,39 @@ public final class SlashRenderer
 
             if (clip.type.get() == 6)
             {
-                follow(controller, clip, replays.get(index), entity, cam, partial, rel);
+                follow(controller, clip, replays.get(index), entity, cam, partial, rel, !linger, x, y, z);
 
                 continue;
+            }
+
+            /* attach the whole effect to a bone (any body part) */
+            if (clip.attach.get() == 1)
+            {
+                Matrix4f bm = boneMatrix(controller, clip, replays.get(index), entity, cam, partial, x, y, z);
+                int axs = clip.axis.get();
+                float dax = axs == 0 ? 1F : axs == 1 ? -1F : 0F, day = axs == 2 ? 1F : axs == 3 ? -1F : 0F, daz = axs == 4 ? 1F : axs == 5 ? -1F : 0F;
+
+                bm.transformPosition(0F, 0F, 0F, TMP);
+
+                float ox = TMP.x, oy = TMP.y, oz = TMP.z;
+
+                cx = ox + clip.offX.get();
+                cy = oy + clip.offY.get() - 1.1F;
+                cz = oz + clip.offZ.get();
+
+                if (clip.followRot.get() == 1)
+                {
+                    bm.transformPosition(dax, day, daz, TMP);
+
+                    float hx = TMP.x - ox, hz = TMP.z - oz;
+                    float hl = (float) Math.sqrt(hx * hx + hz * hz);
+
+                    if (hl > 0.2F)
+                    {
+                        fx = hx / hl; fz = hz / hl;
+                        rx = fz; rz = -fx;
+                    }
+                }
             }
 
             Gfx.begin();
@@ -204,6 +239,18 @@ public final class SlashRenderer
 
     private static String pickBone(SlashClip clip, Form form)
     {
+        int bi = clip.boneIndex.get();
+
+        if (bi > 0)
+        {
+            List<String> all = FormUtilsClient.getBones(form);
+
+            if (all != null && !all.isEmpty())
+            {
+                return all.get((bi - 1) % all.size());
+            }
+        }
+
         String name = clip.bone.get();
 
         if (name != null && !name.trim().isEmpty())
@@ -245,30 +292,35 @@ public final class SlashRenderer
         return null;
     }
 
-    /** Weapon trail that follows a bone of the replay (hand / sword), built from the bone history. */
-    private static void follow(BaseFilmController controller, SlashClip clip, Replay replay, IEntity entity, Vec3d cam, float partial, float rel)
+    /** camera-relative matrix of the chosen bone; falls back to the actor's chest so an effect never silently disappears */
+    private static Matrix4f boneMatrix(BaseFilmController controller, SlashClip clip, Replay replay, IEntity entity, Vec3d cam, float partial,
+                                       double ex, double ey, double ez)
     {
         Form form = entity.getForm();
+        Matrix4f bm = null;
 
-        if (form == null)
+        if (form != null)
         {
-            return;
+            String bone = pickBone(clip, form);
+
+            if (bone != null)
+            {
+                bm = FilmMatrices.getBoneCompositeMatrix(controller.getEntities(), entity, replay, cam.x, cam.y, cam.z, partial, bone, false);
+            }
         }
-
-        String bone = pickBone(clip, form);
-
-        if (bone == null)
-        {
-            return;
-        }
-
-        Matrix4f bm = FilmMatrices.getBoneCompositeMatrix(controller.getEntities(), entity, replay, cam.x, cam.y, cam.z, partial, bone, false);
 
         if (bm == null)
         {
-            return;
+            bm = new Matrix4f().translation((float) (ex - cam.x), (float) (ey - cam.y) + 1.1F, (float) (ez - cam.z));
         }
 
+        return bm;
+    }
+
+    /** Weapon trail that follows a bone of the replay (hand / sword / any part), built from the bone history. */
+    private static void follow(BaseFilmController controller, SlashClip clip, Replay replay, IEntity entity, Vec3d cam, float partial, float rel,
+                               boolean live, double ex, double ey, double ez)
+    {
         float reach = clip.reach.get();
         int axis = clip.axis.get();
         float ax = axis == 0 ? 1F : axis == 1 ? -1F : 0F;
@@ -278,23 +330,30 @@ public final class SlashRenderer
         ArrayDeque<double[]> hist = HISTORY.computeIfAbsent(clip, (k) -> new ArrayDeque<>());
         double[] last = hist.peekLast();
 
-        if (last != null && (rel < last[0] - 0.01F || rel - last[0] > 4F))
+        if (last != null && (rel < last[0] - 0.01F || (live && rel - last[0] > 4F)))
         {
             hist.clear();
             last = null;
         }
 
-        bm.transformPosition(ax * reach * 0.3F, ay * reach * 0.3F, az * reach * 0.3F, TMP);
+        double tx = 0, ty = 0, tz = 0;
 
-        double bx = TMP.x + cam.x, by = TMP.y + cam.y, bz = TMP.z + cam.z;
-
-        bm.transformPosition(ax * reach, ay * reach, az * reach, TMP);
-
-        double tx = TMP.x + cam.x, ty = TMP.y + cam.y, tz = TMP.z + cam.z;
-
-        if (last == null || rel > last[0] + 0.001F)
+        if (live)
         {
-            hist.addLast(new double[] {rel, bx, by, bz, tx, ty, tz});
+            Matrix4f bm = boneMatrix(controller, clip, replay, entity, cam, partial, ex, ey, ez);
+
+            bm.transformPosition(ax * reach * 0.3F, ay * reach * 0.3F, az * reach * 0.3F, TMP);
+
+            double bx = TMP.x + cam.x, by = TMP.y + cam.y, bz = TMP.z + cam.z;
+
+            bm.transformPosition(ax * reach, ay * reach, az * reach, TMP);
+
+            tx = TMP.x + cam.x; ty = TMP.y + cam.y; tz = TMP.z + cam.z;
+
+            if (last == null || rel > last[0] + 0.001F)
+            {
+                hist.addLast(new double[] {rel, bx, by, bz, tx, ty, tz});
+            }
         }
 
         float life = 2F + clip.tail.get() * 14F;
@@ -329,7 +388,11 @@ public final class SlashRenderer
             prev = cur;
         }
 
-        PowerRenderer.glow((float) (tx - cam.x), (float) (ty - cam.y), (float) (tz - cam.z), reach * 0.12F, 0.5F, 0.9F);
+        if (live)
+        {
+            PowerRenderer.glow((float) (tx - cam.x), (float) (ty - cam.y), (float) (tz - cam.z), reach * 0.12F, 0.5F, 0.9F);
+        }
+
         Gfx.end();
     }
 

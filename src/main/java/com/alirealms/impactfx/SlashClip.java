@@ -33,6 +33,12 @@ public class SlashClip extends CameraClip
     public final ValueFloat reach = new ValueFloat("reach", 1.2F, 0.1F, 10F);
     /** bone axis the weapon points along: 0 +X, 1 -X, 2 +Y, 3 -Y, 4 +Z, 5 -Z */
     public final ValueInt axis = new ValueInt("axis", 3, 0, 5);
+    /** 0 = in front of the actor (offsets), 1 = attached to a bone (any body part) for all types */
+    public final ValueInt attach = new ValueInt("attach", 0, 0, 1);
+    /** 0 = use the bone name / auto, k = the k-th bone of the model (scrub it to pick a body part) */
+    public final ValueInt boneIndex = new ValueInt("boneIndex", 0, 0, 200);
+    /** when attached: 1 = the slash direction follows the bone's direction */
+    public final ValueInt followRot = new ValueInt("followRot", 0, 0, 1);
     public final ValueInt core = new ValueInt("core", 0xFFFFFF);
     public final ValueInt edge = new ValueInt("edge", 0x2E9BFF);
 
@@ -57,6 +63,9 @@ public class SlashClip extends CameraClip
         this.add(this.bone);
         this.add(this.reach);
         this.add(this.axis);
+        this.add(this.attach);
+        this.add(this.boneIndex);
+        this.add(this.followRot);
         this.add(this.core);
         this.add(this.edge);
 
