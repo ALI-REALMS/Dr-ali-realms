@@ -239,7 +239,7 @@ public final class ImpactRenderer
                 .withSampler("Sampler0")
                 .withSampler("Sampler1")
                 .withUniform("ImpactData", UniformType.UNIFORM_BUFFER)
-                .withVertexFormat(com.mojang.blaze3d.vertex.VertexFormat.EMPTY, VertexFormat.DrawMode.TRIANGLES)
+                .withVertexFormat(net.minecraft.client.render.VertexFormats.EMPTY, VertexFormat.DrawMode.TRIANGLES)
                 .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
                 .withDepthWrite(false)
                 .withCull(false)
