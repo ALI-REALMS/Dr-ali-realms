@@ -2,6 +2,8 @@
 
 uniform sampler2D Sampler0;   // scene color copy
 uniform sampler2D Sampler1;   // scene depth copy
+uniform sampler2D Sampler2;   // depth BEFORE the BBS forms were drawn
+uniform sampler2D Sampler3;   // depth AFTER the BBS forms were drawn
 
 uniform mat4 InvProj;
 uniform mat4 CamRot;
@@ -12,7 +14,8 @@ uniform vec4 P3; // starCount, starSize, starSeed, starRate(changes/sec)
 uniform vec4 P4; // speedLines, shockwave, inkBurst, flash
 uniform vec4 P5; // centerX, centerY, grain, posterize
 uniform vec4 P6; // shape, scale, speed, density
-uniform vec4 P7; // glow, rotation(rad), fill, -
+uniform vec4 P7; // glow, rotation(rad), fill, charMode
+uniform vec4 P8; // useMask, texelW, texelH, charRim
 uniform vec4 ColS1;
 uniform vec4 ColS2;
 uniform vec4 ColBg;
@@ -56,6 +59,58 @@ float bodyDist(vec3 wp, vec4 act, float R, float H) {
     vec3 c = vec3(a.x, a.y + h * H, a.z);
     float rad = R * (0.80 + 0.20 * sin(h * 3.14159));
     return length(wp - c) - rad;
+}
+
+// ---- real character mask: pixels that the BBS forms made nearer between the two depth snapshots
+float linDepth(float d) {
+    vec4 v = InvProj * vec4(0.0, 0.0, d * 2.0 - 1.0, 1.0);
+    return -v.z / v.w;
+}
+
+float maskRaw(vec2 u) {
+    float dB = texture(Sampler3, u).r;
+    if (dB > 0.99999) return 0.0;
+    float lB = linDepth(dB);
+    float lA = linDepth(texture(Sampler2, u).r);
+    return (lA - lB) > (0.02 + 0.004 * lB) ? 1.0 : 0.0;
+}
+
+// 9-tap smoothed mask (anti-aliased silhouette)
+float maskSmooth(vec2 u, vec2 px) {
+    float m = maskRaw(u) * 0.36;
+    m += (maskRaw(u + vec2(px.x, 0.0)) + maskRaw(u - vec2(px.x, 0.0))
+        + maskRaw(u + vec2(0.0, px.y)) + maskRaw(u - vec2(0.0, px.y))) * 0.10;
+    m += (maskRaw(u + px) + maskRaw(u - px)
+        + maskRaw(u + vec2(px.x, -px.y)) + maskRaw(u + vec2(-px.x, px.y))) * 0.06;
+    return smoothstep(0.32, 0.68, m);
+}
+
+// coverage of the mask on a ring of 8 taps; r is in screen-height units, k converts it to uv
+float ringMax(vec2 u, float r, vec2 k) {
+    float m = 0.0;
+    for (int i = 0; i < 8; i++) {
+        float a = float(i) * 0.7853982;
+        m = max(m, maskRaw(u + vec2(cos(a), sin(a)) * r * k));
+    }
+    return m;
+}
+
+float ringAvg(vec2 u, float r, vec2 k) {
+    float m = 0.0;
+    for (int i = 0; i < 8; i++) {
+        float a = float(i) * 0.7853982 + 0.3927;
+        m += maskRaw(u + vec2(cos(a), sin(a)) * r * k);
+    }
+    return m * 0.125;
+}
+
+// colour that always contrasts with c (complement, forced to black/white when it would be too close)
+vec3 oppositeOf(vec3 c) {
+    vec3 o = vec3(1.0) - c;
+    float lc = dot(c, vec3(0.299, 0.587, 0.114));
+    float lo = dot(o, vec3(0.299, 0.587, 0.114));
+    if (abs(lc - lo) < 0.4) o = vec3(lc > 0.5 ? 0.0 : 1.0);
+    return o;
 }
 
 
@@ -291,16 +346,30 @@ void main() {
     vp /= vp.w;
     vec3 wp = (CamRot * vec4(vp.xyz, 1.0)).xyz;
 
+    bool useMask = P8.x > 0.5;
+    vec2 px = P8.yz;
+    vec2 kUv = vec2(1.0 / asp, 1.0);      // screen-height units -> uv offset
+    vec2 mu = uv2;                        // where the character mask is read (wobbles like a hand drawn edge)
     float edge = 100.0;
-    if (depth < 0.99999) {
-        edge = min(min(bodyDist(wp, Actor0, R, H), bodyDist(wp, Actor1, R, H)),
-                   min(min(bodyDist(wp, Actor2, R, H), bodyDist(wp, Actor3, R, H)),
-                       min(bodyDist(wp, Actor4, R, H), bodyDist(wp, Actor5, R, H))));
-        float n1 = vnoise3(wp * 4.0 + vec3(0.0, 0.0, tq * 1.7));
-        float n2 = vnoise3(wp * 16.0 + vec3(tq * 3.1, 0.0, 0.0));
-        edge += (n1 - 0.5) * distort * 0.35 + (n2 - 0.5) * distort * 0.10;
+    float mask;
+
+    if (useMask) {
+        vec2 nq = uv * vec2(asp, 1.0) * 9.0;
+        vec2 wob = (vec2(vnoise(nq + tq * 1.7), vnoise(nq + 17.0 - tq * 1.3)) - 0.5) * distort * 0.006;
+        mu = uv2 + wob;
+        mask = maskSmooth(mu, px);
+    } else {
+        // fallback (no depth snapshots): rough cylinder around each actor
+        if (depth < 0.99999) {
+            edge = min(min(bodyDist(wp, Actor0, R, H), bodyDist(wp, Actor1, R, H)),
+                       min(min(bodyDist(wp, Actor2, R, H), bodyDist(wp, Actor3, R, H)),
+                           min(bodyDist(wp, Actor4, R, H), bodyDist(wp, Actor5, R, H))));
+            float n1 = vnoise3(wp * 4.0 + vec3(0.0, 0.0, tq * 1.7));
+            float n2 = vnoise3(wp * 16.0 + vec3(tq * 3.1, 0.0, 0.0));
+            edge += (n1 - 0.5) * distort * 0.35 + (n2 - 0.5) * distort * 0.10;
+        }
+        mask = 1.0 - smoothstep(-0.015, 0.015, edge);
     }
-    float mask = 1.0 - smoothstep(-0.015, 0.015, edge);
 
     vec3 bg = ColBg.rgb, ink = ColInk.rgb, acc = ColAccent.rgb;
     vec3 sceneP = post > 0.5 ? floor(scene * post + 0.5) / post : scene;
@@ -356,16 +425,37 @@ void main() {
     }
 
     float gr = (vnoise(uv * vec2(asp, 1.0) * 420.0 + floor(t) * 7.3) - 0.5) * grain;
+    // stable "paper" colour = the impact backdrop (not the per-pixel lines), so the actor colour doesn't flicker
+    vec3 paper = bg;
+    if (shape >= 5) paper = mix(bg, ColS2.rgb, P7.z);
+    float pl = dot(paper, vec3(0.299, 0.587, 0.114));
+    paper = mix(paper, vec3(pl), worldMix);
     vec3 charCol = ink;
     int cm = int(P7.w + 0.5);
-    float wl = dot(world, vec3(0.299, 0.587, 0.114));
-    if (cm == 1) charCol = wl > 0.5 ? ink : ColInk2.rgb;
-    else if (cm == 2) charCol = vec3(1.0) - world;
+    if (cm == 1) charCol = pl > 0.5 ? ink : ColInk2.rgb;
+    else if (cm == 2) charCol = oppositeOf(paper);
+    else if (cm == 3) charCol = vec3(1.0) - world;
     vec3 actor = clamp(charCol + gr, 0.0, 1.0);
-    vec3 col = mix(world, actor, mask);
+
+    // knock-out rim in the backdrop colour so the actor never melts into lines/shapes
+    float rim = 0.0;
+    if (useMask && P8.w > 0.001) {
+        float rimW = P8.w * 0.006;
+        rim = max(ringMax(mu, rimW * 0.5, kUv), ringMax(mu, rimW, kUv));
+        rim *= (1.0 - mask) * (1.0 - worldMix);
+    }
+    vec3 base = mix(world, paper, rim);
+    vec3 col = mix(base, actor, mask);
 
     // aura glow around the actor
-    float halo = aura * exp(-max(edge, 0.0) / max(auraW, 0.001)) * (1.0 - mask);
+    float halo;
+    if (useMask) {
+        float ar = max(auraW, 0.005) * 0.12;
+        float cov = (ringAvg(mu, ar * 0.4, kUv) + ringAvg(mu, ar * 0.8, kUv) + ringAvg(mu, ar * 1.4, kUv)) / 3.0;
+        halo = aura * cov * (1.0 - mask);
+    } else {
+        halo = aura * exp(-max(edge, 0.0) / max(auraW, 0.001)) * (1.0 - mask);
+    }
     col = mix(col, acc, clamp(halo, 0.0, 1.0));
 
     // speed lines

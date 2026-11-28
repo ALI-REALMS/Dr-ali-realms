@@ -14,8 +14,13 @@ public class ImpactClip extends CameraClip
     public final ValueInt mode = new ValueInt("mode", 0, 0, 4);
     public final ValueInt bg = new ValueInt("bg", 0xFFFFFF);
     public final ValueInt ink = new ValueInt("ink", 0x000000);
-    /** character colour: 0 fixed, 1 auto contrast vs backdrop, 2 invert backdrop */
-    public final ValueFloat charMode = new ValueFloat("charMode", 0F, 0F, 2F);
+    /**
+     * character colour: 0 fixed, 1 auto contrast vs the impact backdrop, 2 opposite colour of the backdrop,
+     * 3 per-pixel negative of whatever is behind the character
+     */
+    public final ValueFloat charMode = new ValueFloat("charMode", 1F, 0F, 3F);
+    /** knock-out outline in the backdrop colour around the characters, so they never melt into the impact lines */
+    public final ValueFloat charRim = new ValueFloat("charRim", 0.6F, 0F, 1F);
     public final ValueInt inkAlt = new ValueInt("inkAlt", 0xFFFFFF);
     public final ValueInt accent = new ValueInt("accent", 0x000000);
     public final ValueInt starColor = new ValueInt("starColor", 0x000000);
@@ -62,6 +67,7 @@ public class ImpactClip extends CameraClip
         this.add(this.bg);
         this.add(this.ink);
         this.add(this.charMode);
+        this.add(this.charRim);
         this.add(this.inkAlt);
         this.add(this.accent);
         this.add(this.starColor);

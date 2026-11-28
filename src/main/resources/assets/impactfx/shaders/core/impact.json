@@ -7,6 +7,12 @@
   },
   {
    "name": "Sampler1"
+  },
+  {
+   "name": "Sampler2"
+  },
+  {
+   "name": "Sampler3"
   }
  ],
  "uniforms": [
@@ -89,6 +95,17 @@
   },
   {
    "name": "P7",
+   "type": "float",
+   "count": 4,
+   "values": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "name": "P8",
    "type": "float",
    "count": 4,
    "values": [

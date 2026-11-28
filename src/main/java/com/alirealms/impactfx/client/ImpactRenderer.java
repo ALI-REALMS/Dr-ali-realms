@@ -3,12 +3,15 @@ package com.alirealms.impactfx.client;
 import com.alirealms.impactfx.ImpactClip;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.api.client.events.FilmEvents;
 import mchorse.bbs_mod.film.BaseFilmController;
+import mchorse.bbs_mod.film.Films;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.event.Event;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.GlUniform;
@@ -37,6 +40,19 @@ public final class ImpactRenderer
 {
     private static ShaderProgram program;
     private static SimpleFramebuffer copy;
+
+    /**
+     * Character mask. BBS draws every film actor inside the AFTER_ENTITIES world event
+     * (BBSRendering.renderCoolStuff). We copy the depth buffer right before that happens (depthPre)
+     * and right after it (depthPost): a pixel whose depth got nearer in between was painted by a
+     * BBS form, i.e. it belongs to a character. This follows the real model, whatever its size.
+     */
+    private static SimpleFramebuffer depthPre;
+    private static SimpleFramebuffer depthPost;
+    private static boolean preDone;
+    private static boolean postDone;
+    private static volatile BaseFilmController lastController;
+
     private static volatile BaseFilmController pending;
     private static Quaternionf snapRot = new Quaternionf();
     private static Vec3d snapPos = Vec3d.ZERO;
@@ -63,18 +79,127 @@ public final class ImpactRenderer
 
     if (pending != null)
     {
+        lastController = pending;
         snapRot = new Quaternionf(context.camera().getRotation());
         snapPos = context.camera().getPos();
         snapProj = new Matrix4f(RenderSystem.getProjectionMatrix());
     }
 });
 
+        /* depth snapshots around BBS's own AFTER_ENTITIES listener (it renders the film actors) */
+        Identifier early = Identifier.of("impactfx", "mask_before");
+        Identifier late = Identifier.of("impactfx", "mask_after");
+
+        WorldRenderEvents.AFTER_ENTITIES.addPhaseOrdering(early, Event.DEFAULT_PHASE);
+        WorldRenderEvents.AFTER_ENTITIES.addPhaseOrdering(Event.DEFAULT_PHASE, late);
+        WorldRenderEvents.AFTER_ENTITIES.register(early, (context) -> snapshotBefore());
+        WorldRenderEvents.AFTER_ENTITIES.register(late, (context) -> snapshotAfter());
+
         WorldRenderEvents.LAST.register((context) ->
         {
-            run(false);
+            try
+            {
+                run(false);
+            }
+            finally
+            {
+                preDone = false;
+                postDone = false;
+            }
         });
 
         Gfx.initLate();
+    }
+
+    /** true when some film that is being rendered contains at least one impact clip */
+    private static boolean hasImpactClips()
+    {
+        try
+        {
+            BaseFilmController last = lastController;
+
+            if (last != null && last.film != null && last.film.camera != null && !last.film.camera.getClips(ImpactClip.class).isEmpty())
+            {
+                return true;
+            }
+
+            Films films = BBSModClient.getFilms();
+
+            if (films != null)
+            {
+                for (BaseFilmController controller : films.getControllers())
+                {
+                    if (controller != null && controller.film != null && controller.film.camera != null
+                        && !controller.film.camera.getClips(ImpactClip.class).isEmpty())
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        catch (RuntimeException ignored)
+        {
+            /* never break the world render because of a mask lookup */
+        }
+
+        return false;
+    }
+
+    private static SimpleFramebuffer ensure(SimpleFramebuffer fb, int w, int h)
+    {
+        if (fb == null)
+        {
+            return new SimpleFramebuffer(w, h, true, MinecraftClient.IS_SYSTEM_MAC);
+        }
+
+        if (fb.textureWidth != w || fb.textureHeight != h)
+        {
+            fb.resize(w, h, MinecraftClient.IS_SYSTEM_MAC);
+        }
+
+        return fb;
+    }
+
+    private static void blitDepth(SimpleFramebuffer to, Framebuffer main)
+    {
+        int w = main.textureWidth;
+        int h = main.textureHeight;
+
+        GlStateManager._glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.fbo);
+        GlStateManager._glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, to.fbo);
+        GL30.glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL11.GL_DEPTH_BUFFER_BIT, GL11.GL_NEAREST);
+        main.beginWrite(false);
+    }
+
+    private static void snapshotBefore()
+    {
+        preDone = false;
+        postDone = false;
+
+        if (!hasImpactClips())
+        {
+            return;
+        }
+
+        Framebuffer main = MinecraftClient.getInstance().getFramebuffer();
+
+        depthPre = ensure(depthPre, main.textureWidth, main.textureHeight);
+        blitDepth(depthPre, main);
+        preDone = true;
+    }
+
+    private static void snapshotAfter()
+    {
+        if (!preDone)
+        {
+            return;
+        }
+
+        Framebuffer main = MinecraftClient.getInstance().getFramebuffer();
+
+        depthPost = ensure(depthPost, main.textureWidth, main.textureHeight);
+        blitDepth(depthPost, main);
+        postDone = true;
     }
 
     private static void u4(String name, float a, float b, float c, float d)
@@ -188,6 +313,13 @@ public final class ImpactRenderer
         u4("P5", c.centerX.get(), c.centerY.get(), c.grain.get(), c.posterize.get());
         u4("P6", c.shape.get(), c.shapeScale.get(), c.shapeSpeed.get(), c.shapeDensity.get());
         u4("P7", c.shapeGlow.get(), (float) Math.toRadians(c.shapeRot.get()), c.shapeFill.get(), c.charMode.get());
+
+        /* P8: x = real character mask available (1) or fall back to the actor cylinders (0), yz = texel size, w = rim */
+        boolean useMask = preDone && postDone && depthPre != null && depthPost != null
+            && depthPre.textureWidth == w && depthPre.textureHeight == h
+            && depthPost.textureWidth == w && depthPost.textureHeight == h;
+
+        u4("P8", useMask ? 1F : 0F, 1F / w, 1F / h, c.charRim.get());
         color("ColS1", c.shapeCol1.get());
         color("ColS2", c.shapeCol2.get());
         color("ColBg", c.bg.get());
@@ -236,6 +368,8 @@ public final class ImpactRenderer
         RenderSystem.setShader(() -> program);
         RenderSystem.setShaderTexture(0, copy.getColorAttachment());
         RenderSystem.setShaderTexture(1, copy.getDepthAttachment());
+        RenderSystem.setShaderTexture(2, useMask ? depthPre.getDepthAttachment() : copy.getDepthAttachment());
+        RenderSystem.setShaderTexture(3, useMask ? depthPost.getDepthAttachment() : copy.getDepthAttachment());
 
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
 
