@@ -232,7 +232,7 @@ public final class ImpactRenderer
 
         if (pipeline == null)
         {
-            pipeline = RenderPipeline.builder()
+            pipeline = net.minecraft.client.gl.RenderPipelines.register(RenderPipeline.builder()
                 .withLocation(Identifier.of("impactfx", "pipeline/impact"))
                 .withVertexShader(Identifier.of("impactfx", "core/impact"))
                 .withFragmentShader(Identifier.of("impactfx", "core/impact"))
@@ -244,7 +244,7 @@ public final class ImpactRenderer
                 .withDepthWrite(false)
                 .withCull(false)
                 .withoutBlend()
-                .build();
+                .build());
         }
 
         try (RenderPass pass = encoder.createRenderPass(() -> "impactfx", main.getColorAttachmentView(), OptionalInt.empty()))

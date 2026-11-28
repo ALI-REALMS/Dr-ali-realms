@@ -41,7 +41,7 @@ final class Gfx
 
     private static RenderPipeline pipeline(String name, BlendFunction blend)
     {
-        return RenderPipeline.builder()
+        return net.minecraft.client.gl.RenderPipelines.register(RenderPipeline.builder()
             .withLocation(Identifier.of("impactfx", "pipeline/" + name))
             .withVertexShader(Identifier.of("impactfx", "core/glow"))
             .withFragmentShader(Identifier.of("impactfx", "core/glow"))
@@ -51,7 +51,7 @@ final class Gfx
             .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
             .withDepthWrite(false)
             .withCull(false)
-            .build();
+            .build());
     }
 
     static void initLate()
