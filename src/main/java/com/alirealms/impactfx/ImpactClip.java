@@ -16,6 +16,7 @@ public class ImpactClip extends CameraClip
     public final ValueInt ink = new ValueInt("ink", 0x000000);
     /** character colour: 0 fixed, 1 auto contrast, 2 invert backdrop, 3 real character inverted */
     public final ValueFloat charMode = new ValueFloat("charMode", 3F, 0F, 3F);
+    public final ValueFloat charShade = new ValueFloat("charShade", 0.85F, 0F, 1F);
     public final ValueInt inkAlt = new ValueInt("inkAlt", 0xFFFFFF);
     public final ValueInt accent = new ValueInt("accent", 0x000000);
     public final ValueInt starColor = new ValueInt("starColor", 0x000000);
@@ -63,6 +64,7 @@ public class ImpactClip extends CameraClip
         this.add(this.ink);
         this.add(this.charMode);
         this.add(this.inkAlt);
+        this.add(this.charShade);
         this.add(this.accent);
         this.add(this.starColor);
         this.add(this.threshold);
