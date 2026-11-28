@@ -71,7 +71,20 @@ public final class ImpactRenderer
 
         WorldRenderEvents.END_MAIN.register((context) ->
         {
-            run(false);
+            /* with a shader pack the main target only holds the finished image after the pack's final pass,
+               so the effect is drawn later, from the HUD callback */
+            if (!Compat.iris())
+            {
+                run(false);
+            }
+        });
+
+        net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback.EVENT.register((context, tickCounter) ->
+        {
+            if (Compat.iris())
+            {
+                run(true);
+            }
         });
 
         Gfx.initLate();
@@ -174,6 +187,7 @@ public final class ImpactRenderer
         u4("P5", c.centerX.get(), c.centerY.get(), c.grain.get(), c.posterize.get());
         u4("P6", c.shape.get(), c.shapeScale.get(), c.shapeSpeed.get(), c.shapeDensity.get());
         u4("P7", c.shapeGlow.get(), (float) Math.toRadians(c.shapeRot.get()), c.shapeFill.get(), Math.round(c.charMode.get()) + Math.min(1F, Math.max(0F, c.charShade.get())) * 0.99F);
+        u4("P8", Compat.iris() ? 1F : 0F, 0F, 0F, 0F);
         color("ColS1", c.shapeCol1.get());
         color("ColS2", c.shapeCol2.get());
         color("ColBg", c.bg.get());
@@ -216,7 +230,7 @@ public final class ImpactRenderer
         }
 
         /* uniform block, in std140 order */
-        String[] order = {"P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "ColS1", "ColS2", "ColBg", "ColInk", "ColInk2",
+        String[] order = {"P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "ColS1", "ColS2", "ColBg", "ColInk", "ColInk2",
             "ColAccent", "ColStar", "Actor0", "Actor1", "Actor2", "Actor3", "Actor4", "Actor5"};
         GpuBuffer ubo;
 
