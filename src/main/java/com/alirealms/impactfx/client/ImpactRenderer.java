@@ -153,7 +153,23 @@ public final class ImpactRenderer
             return;
         }
 
+        /* shader pack + BBS editor preview: the image the editor shows lives in BBS's own framebuffer */
         Framebuffer main = mc.getFramebuffer();
+
+        if (hud && Compat.iris())
+        {
+            try
+            {
+                Framebuffer fb = mchorse.bbs_mod.client.BBSRendering.getFramebuffer();
+
+                if (fb != null && fb != main && mchorse.bbs_mod.client.BBSRendering.isCustomSize())
+                {
+                    main = fb;
+                }
+            }
+            catch (Throwable ignored)
+            {}
+        }
         int w = main.textureWidth;
         int h = main.textureHeight;
 
