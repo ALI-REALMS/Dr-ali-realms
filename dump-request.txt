@@ -1,3 +1,9 @@
-find:RenderPipelines|RenderPipeline.java|ShaderProgram|world/WorldRender|CoreShader|PostEffect
+ls:blaze3d/(pipeline|systems|buffers|textures|shaders)/[A-Za-z]*\.java
+ls:client/gl/(Shader|Uniform|Render|Post|Mappable|Gpu|Framebuffer|Dynamic)[A-Za-z]*\.java
+ls:fabric/api/client/rendering
+sig:blaze3d/pipeline/RenderPipeline\.java
+sig:blaze3d/systems/(RenderPass|CommandEncoder|GpuDevice|RenderSystem)\.java
+sig:client/gl/(RenderPassImpl|MappableRingBuffer|DynamicUniforms|ShaderLoader)\.java
+sig:client/render/BuiltBuffer\.java
 bbs:mchorse.bbs_mod.client.BBSRendering
 bbs:mchorse.bbs_mod.film.FilmEvents
