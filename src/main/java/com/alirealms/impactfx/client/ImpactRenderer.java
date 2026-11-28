@@ -45,6 +45,8 @@ public final class ImpactRenderer
     private static Vec3d snapPos = Vec3d.ZERO;
     private static Matrix4f snapProj = new Matrix4f();
 
+    public static volatile boolean enabled = true;
+
     private ImpactRenderer() {}
 
     public static void init()
@@ -90,6 +92,11 @@ public final class ImpactRenderer
     BaseFilmController controller = pending;
 
     pending = null;
+
+        if (!enabled)
+        {
+            return;
+        }
 
     if (controller == null || false || controller.film == null || controller.film.camera == null)
     {
