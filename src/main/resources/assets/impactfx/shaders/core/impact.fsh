@@ -13,6 +13,7 @@ uniform vec4 P4; // speedLines, shockwave, inkBurst, flash
 uniform vec4 P5; // centerX, centerY, grain, posterize
 uniform vec4 P6; // shape, scale, speed, density
 uniform vec4 P7; // glow, rotation(rad), fill, -
+uniform vec4 P8; // shaderPack(1 = no usable depth), -, -, -
 uniform vec4 ColS1;
 uniform vec4 ColS2;
 uniform vec4 ColBg;
@@ -319,6 +320,7 @@ void main() {
 
     float edge = 100.0;
     int cm = int(floor(P7.w + 0.0001));
+    bool useCyl = cm == 3 && P8.x < 0.5;   // shader packs: no usable depth, characters come from the analytic bodies
     float shade = clamp(fract(P7.w + 0.0001) / 0.99, 0.0, 1.0);
     float Re = cm == 3 ? R * 1.5 : R;
     float band = cm == 3 ? R * 1.4 : 0.0;
@@ -336,7 +338,7 @@ void main() {
     if (r5.x < rb.x) rb = r5;
     edge = rb.x;
     float pw = rb.y * 0.0012;
-    if (cm == 3) {
+    if (useCyl) {
         edge = 100.0;
         pw = 0.0;
         if (depth < 0.99999) {
@@ -347,7 +349,7 @@ void main() {
             pw = sceneDist * 0.0006;
         }
     }
-    if (rb.x < 50.0 && cm != 3) {
+    if (rb.x < 50.0 && !useCyl) {
         vec3 np = rd * rb.y;
         float n1 = vnoise3(np * 4.0 + vec3(0.0, 0.0, tq * 1.7));
         float n2 = vnoise3(np * 16.0 + vec3(tq * 3.1, 0.0, 0.0));
