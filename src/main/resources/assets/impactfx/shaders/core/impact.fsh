@@ -17,6 +17,7 @@ uniform vec4 ColS1;
 uniform vec4 ColS2;
 uniform vec4 ColBg;
 uniform vec4 ColInk;
+uniform vec4 ColInk2;
 uniform vec4 ColAccent;
 uniform vec4 ColStar;
 uniform vec4 Actor0;
@@ -355,7 +356,12 @@ void main() {
     }
 
     float gr = (vnoise(uv * vec2(asp, 1.0) * 420.0 + floor(t) * 7.3) - 0.5) * grain;
-    vec3 actor = clamp(ink + gr, 0.0, 1.0);
+    vec3 charCol = ink;
+    int cm = int(P7.w + 0.5);
+    float wl = dot(world, vec3(0.299, 0.587, 0.114));
+    if (cm == 1) charCol = wl > 0.5 ? ink : ColInk2.rgb;
+    else if (cm == 2) charCol = vec3(1.0) - world;
+    vec3 actor = clamp(charCol + gr, 0.0, 1.0);
     vec3 col = mix(world, actor, mask);
 
     // aura glow around the actor
