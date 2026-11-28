@@ -23,7 +23,8 @@ public class UIImpactClip extends UIClip<ImpactClip>
     public UITrackpad actorRadius, actorHeight, aura, auraWidth;
     public UITrackpad starCount, starSize, starSeed, starRate;
     public UITrackpad speedLines, shockwave, inkBurst, flash, centerX, centerY;
-    public UIColor bg, ink, accent, starColor;
+    public UITrackpad shape, shapeScale, shapeSpeed, shapeDensity, shapeGlow, shapeRot, shapeFill;
+    public UIColor bg, ink, accent, starColor, shapeCol1, shapeCol2;
 
     public UIImpactClip(ImpactClip clip, IUIClipsDelegate editor)
     {
@@ -84,10 +85,20 @@ public class UIImpactClip extends UIClip<ImpactClip>
         this.centerX = this.f(c.centerX, "Center X", 0, 1);
         this.centerY = this.f(c.centerY, "Center Y", 0, 1);
 
+        this.shape = this.i(c.shape, "Shape 0 off|1 Star|2 Bolt|3 Rain|4 Splat|5 Ink|6 Slash|7 Eye", 0, 7);
+        this.shapeScale = this.f(c.shapeScale, "Shape size", 0.2, 3);
+        this.shapeSpeed = this.f(c.shapeSpeed, "Shape speed", 0, 5);
+        this.shapeDensity = this.f(c.shapeDensity, "Shape density", 0.2, 3);
+        this.shapeGlow = this.f(c.shapeGlow, "Shape glow", 0, 3);
+        this.shapeRot = this.f(c.shapeRot, "Shape rotation", -180, 180);
+        this.shapeFill = this.f(c.shapeFill, "Backdrop cover", 0, 1);
+
         this.bg = this.color(c.bg);
         this.ink = this.color(c.ink);
         this.accent = this.color(c.accent);
         this.starColor = this.color(c.starColor);
+        this.shapeCol1 = this.color(c.shapeCol1);
+        this.shapeCol2 = this.color(c.shapeCol2);
     }
 
     @Override
@@ -97,6 +108,9 @@ public class UIImpactClip extends UIClip<ImpactClip>
 
         this.panels.add(this.section(IKey.raw("Presets"), this.presetButtons.toArray(new UIElement[0])));
         this.panels.add(this.section(IKey.raw("Look"), this.mode, this.threshold, this.worldMix, this.distort, this.grain, this.posterize));
+        this.panels.add(this.section(IKey.raw("Overlay shape"), this.shape, this.shapeScale, this.shapeSpeed, this.shapeDensity, this.shapeGlow, this.shapeRot, this.shapeFill));
+        this.panels.add(this.section(IKey.raw("Shape color 1 (streaks / ink)"), this.shapeCol1));
+        this.panels.add(this.section(IKey.raw("Shape color 2 (glow / paper)"), this.shapeCol2));
         this.panels.add(this.section(IKey.raw("Background color"), this.bg));
         this.panels.add(this.section(IKey.raw("Character (ink) color"), this.ink));
         this.panels.add(this.section(IKey.raw("Accent color (lines, aura, shockwave)"), this.accent));
