@@ -4,7 +4,9 @@ import mchorse.bbs_mod.camera.clips.CameraClip;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.settings.values.core.ValueString;
 import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
+import mchorse.bbs_mod.settings.values.core.ValueTransform;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
+import mchorse.bbs_mod.utils.pose.Transform;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 
@@ -39,6 +41,8 @@ public class SlashClip extends CameraClip
     public final ValueInt boneIndex = new ValueInt("boneIndex", 0, 0, 200);
     /** when attached: 1 = the slash direction follows the bone's direction */
     public final ValueInt followRot = new ValueInt("followRot", 0, 0, 1);
+    /** position / rotation / size of the effect, edited like a character's transform */
+    public final ValueTransform xform = new ValueTransform("xform", new Transform());
     public final ValueInt core = new ValueInt("core", 0xFFFFFF);
     public final ValueInt edge = new ValueInt("edge", 0x2E9BFF);
 
@@ -66,6 +70,7 @@ public class SlashClip extends CameraClip
         this.add(this.attach);
         this.add(this.boneIndex);
         this.add(this.followRot);
+        this.add(this.xform);
         this.add(this.core);
         this.add(this.edge);
 

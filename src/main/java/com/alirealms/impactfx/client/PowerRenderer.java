@@ -8,6 +8,7 @@ import mchorse.bbs_mod.forms.entities.IEntity;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
+import mchorse.bbs_mod.utils.pose.Transform;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -76,8 +77,12 @@ public final class PowerRenderer
         context.camera().getRotation().transform(0F, 1F, 0F, camUp);
         m = stack.peek().getPositionMatrix();
 
+        Matrix4f base = m;
+
         for (PowerClip clip : clips)
         {
+            m = base;
+
             if (!clip.enabled.get() || !clip.isInside(tick))
             {
                 continue;
@@ -121,9 +126,13 @@ public final class PowerRenderer
                 began = true;
             }
 
-            float ox = (float) (x - cam.x) + clip.offX.get();
-            float oy = (float) (y - cam.y) + clip.offY.get();
-            float oz = (float) (z - cam.z) + clip.offZ.get();
+            Transform xt = clip.xform.get();
+            float[] lo = FxXform.local(xt, 0F, 1F, 1F, 0F);
+            float ox = (float) (x - cam.x) + clip.offX.get() + lo[0];
+            float oy = (float) (y - cam.y) + clip.offY.get() + lo[1];
+            float oz = (float) (z - cam.z) + clip.offZ.get() + lo[2];
+
+            m = FxXform.around(base, xt, ox, oy, oz);
             float[] c = new float[3];
 
             unpack(clip.core.get(), c);

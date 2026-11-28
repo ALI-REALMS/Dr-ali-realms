@@ -8,6 +8,7 @@ import mchorse.bbs_mod.ui.film.clips.UIClip;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.input.UIColor;
+import mchorse.bbs_mod.ui.framework.elements.input.UIPropTransform;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 import mchorse.bbs_mod.ui.framework.elements.input.text.UITextbox;
 
@@ -21,6 +22,7 @@ public class UISlashClip extends UIClip<SlashClip>
     public UITextbox bone;
     public UITrackpad reach, axis, attach, boneIndex, followRot;
     public UITrackpad type, actor, offX, offY, offZ, yaw, tilt, radius, arc, thickness, tail, count, intensity, seed;
+    public UIPropTransform xform;
     public UIColor core, edge;
 
     public UISlashClip(SlashClip clip, IUIClipsDelegate editor)
@@ -78,6 +80,7 @@ public class UISlashClip extends UIClip<SlashClip>
         this.attach = this.i(c.attach, "Attach to bone 0 off | 1 on (all types)", 0, 1);
         this.boneIndex = this.i(c.boneIndex, "Bone number (0 = name/auto, scrub to pick a body part)", 0, 200);
         this.followRot = this.i(c.followRot, "Direction follows bone 0 no | 1 yes", 0, 1);
+        this.xform = this.transform(c.xform);
         this.core = this.color(c.core);
         this.edge = this.color(c.edge);
     }
@@ -89,6 +92,7 @@ public class UISlashClip extends UIClip<SlashClip>
 
         this.panels.add(this.section(IKey.raw("Presets"), this.presetButtons.toArray(new UIElement[0])));
         this.panels.add(this.section(IKey.raw("Effect"), this.type, this.actor, this.offX, this.offY, this.offZ, this.yaw, this.tilt));
+        this.panels.add(this.section(IKey.raw("Transform: move / rotate / scale (like a character)"), this.xform));
         this.panels.add(this.section(IKey.raw("Attach to a body part (offset Y 1.1 = exactly on the bone)"), this.attach, this.boneIndex, this.followRot));
         this.panels.add(this.section(IKey.raw("Bone name (empty = auto right hand) + weapon reach/axis"), this.bone, this.reach, this.axis));
         this.panels.add(this.section(IKey.raw("Core color"), this.core));

@@ -8,6 +8,7 @@ import mchorse.bbs_mod.ui.film.clips.UIClip;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.input.UIColor;
+import mchorse.bbs_mod.ui.framework.elements.input.UIPropTransform;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ public class UIRiftClip extends UIClip<RiftClip>
     private List<UIElement> presetButtons;
 
     public UITrackpad type, actor, offX, offY, offZ, dist, yaw, tilt, length, width, jagged, sparks, pulse, intensity, seed;
+    public UIPropTransform xform;
     public UIColor core, edge, voidColor;
 
     public UIRiftClip(RiftClip clip, IUIClipsDelegate editor)
@@ -70,6 +72,7 @@ public class UIRiftClip extends UIClip<RiftClip>
         this.pulse = this.f(c.pulse, "Pulse speed", 0, 6);
         this.intensity = this.f(c.intensity, "Brightness", 0, 3);
         this.seed = this.i(c.seed, "Seed", 0, 9999);
+        this.xform = this.transform(c.xform);
         this.core = this.color(c.core);
         this.edge = this.color(c.edge);
         this.voidColor = this.color(c.voidColor);
@@ -82,6 +85,7 @@ public class UIRiftClip extends UIClip<RiftClip>
 
         this.panels.add(this.section(IKey.raw("Presets"), this.presetButtons.toArray(new UIElement[0])));
         this.panels.add(this.section(IKey.raw("Placement"), this.type, this.actor, this.dist, this.offX, this.offY, this.offZ, this.yaw, this.tilt));
+        this.panels.add(this.section(IKey.raw("Transform: move / rotate / scale (like a character)"), this.xform));
         this.panels.add(this.section(IKey.raw("Core (glow) color"), this.core));
         this.panels.add(this.section(IKey.raw("Edge color"), this.edge));
         this.panels.add(this.section(IKey.raw("Inside (void) color"), this.voidColor));
