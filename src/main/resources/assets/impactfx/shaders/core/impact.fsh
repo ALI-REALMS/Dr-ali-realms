@@ -414,9 +414,10 @@ void main() {
     else if (cm == 3) {
         float Ln = clamp((dot(scene, vec3(0.299, 0.587, 0.114)) - 0.05) / 0.85, 0.0, 1.0);
         vec3 onDark = ColInk2.rgb * mix(0.35, 1.0, Ln);
-        vec3 onBright = mix(ColInk.rgb, vec3(0.7), 1.0 - Ln);
+        vec3 onBright = mix(ColInk.rgb, vec3(0.3), pow(1.0 - Ln, 1.6));
         charCol = mix(onDark, onBright, smoothstep(0.35, 0.65, wl));
     }
+    if (cm == 3) gr = 0.0;
     vec3 actor = clamp(charCol + gr, 0.0, 1.0);
     vec3 col = mix(world, actor, mask);
 
