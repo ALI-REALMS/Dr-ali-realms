@@ -30,7 +30,13 @@ public final class PowerRenderer
 
     public static void init()
     {
-        FilmEvents.RENDER_AFTER.register(PowerRenderer::render);
+        FilmEvents.RENDER_AFTER.register((controller, context) ->
+        {
+            if (!Compat.shadow())
+            {
+                render(controller, context);
+            }
+        });
     }
 
     static float hash(float x)
