@@ -13,7 +13,7 @@ public final class Presets
     public static void apply(ImpactClip c, int i)
     {
         /* defaults */
-        c.mode.set(0); c.charMode.set(3F); c.inkAlt.set(0xFFFFFF); c.bg.set(0xFFFFFF); c.ink.set(0x000000); c.accent.set(0x000000); c.starColor.set(0x000000);
+        c.mode.set(0); c.charMode.set(3F); c.charShade.set(0.85F); c.inkAlt.set(0xFFFFFF); c.bg.set(0xFFFFFF); c.ink.set(0x000000); c.accent.set(0x000000); c.starColor.set(0x000000);
         c.threshold.set(0.5F); c.worldMix.set(0F); c.distort.set(0.6F); c.grain.set(0.25F); c.posterize.set(0);
         c.aura.set(0F); c.auraWidth.set(8F);
         c.starCount.set(0); c.starSize.set(0.03F); c.starRate.set(6F);

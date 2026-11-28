@@ -315,7 +315,8 @@ void main() {
     vec3 wp = (CamRot * vec4(vp.xyz, 1.0)).xyz;
 
     float edge = 100.0;
-    int cm = int(P7.w + 0.5);
+    int cm = int(floor(P7.w + 0.0001));
+    float shade = clamp(fract(P7.w + 0.0001) / 0.99, 0.0, 1.0);
     float Re = cm == 3 ? R * 1.5 : R;
     float band = cm == 3 ? R * 1.4 : 0.0;
     float sceneDist = depth < 0.99999 ? length(wp) : 1e9;
@@ -411,8 +412,8 @@ void main() {
     else if (cm == 2) charCol = vec3(1.0) - world;
     else if (cm == 3) {
         float Ln = clamp((dot(scene, vec3(0.299, 0.587, 0.114)) - 0.05) / 0.85, 0.0, 1.0);
-        vec3 onDark = ColInk2.rgb * mix(0.35, 1.0, Ln);
-        vec3 onBright = mix(ColInk.rgb, vec3(0.3), pow(1.0 - Ln, 1.6));
+        vec3 onDark = ColInk2.rgb * mix(mix(0.45, 1.0, Ln), 1.0, shade * 0.8);
+        vec3 onBright = mix(ColInk.rgb, vec3(0.3), pow(1.0 - Ln, 1.6) * (1.0 - shade));
         charCol = mix(onDark, onBright, smoothstep(0.35, 0.65, wl));
     }
     if (cm == 3) gr = 0.0;
