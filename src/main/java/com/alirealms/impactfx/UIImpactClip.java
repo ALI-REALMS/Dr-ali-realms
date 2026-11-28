@@ -18,6 +18,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
 {
     /* assigned in registerUI(), which the super constructor calls (no initializer on purpose) */
     private List<UIElement> presetButtons;
+    private UIButton fxOn, fxOff;
 
     public UITrackpad mode, threshold, worldMix, distort, grain, posterize;
     public UITrackpad actorRadius, actorHeight, aura, auraWidth;
@@ -95,8 +96,10 @@ public class UIImpactClip extends UIClip<ImpactClip>
 
         this.bg = this.color(c.bg);
         this.ink = this.color(c.ink);
+        this.fxOn = new UIButton(IKey.raw("Impact ON (show effect)"), (b) -> com.alirealms.impactfx.client.ImpactRenderer.enabled = true);
+        this.fxOff = new UIButton(IKey.raw("Impact OFF (hide effect)"), (b) -> com.alirealms.impactfx.client.ImpactRenderer.enabled = false);
         this.inkAlt = this.color(c.inkAlt);
-        this.charMode = this.f(c.charMode, "Char mode (0 fixed,1 auto,2 invert)", 0, 2);
+        this.charMode = this.f(c.charMode, "Char mode (0 fixed,1 auto,2 invert bg,3 real inverted)", 0, 3);
         this.accent = this.color(c.accent);
         this.starColor = this.color(c.starColor);
         this.shapeCol1 = this.color(c.shapeCol1);
@@ -108,6 +111,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
     {
         super.registerPanels();
 
+        this.panels.add(this.section(IKey.raw("Impact on/off (also: /impactfx on|off)"), this.fxOn, this.fxOff));
         this.panels.add(this.section(IKey.raw("Presets"), this.presetButtons.toArray(new UIElement[0])));
         this.panels.add(this.section(IKey.raw("Look"), this.mode, this.threshold, this.worldMix, this.distort, this.grain, this.posterize));
         this.panels.add(this.section(IKey.raw("Overlay shape"), this.shape, this.shapeScale, this.shapeSpeed, this.shapeDensity, this.shapeGlow, this.shapeRot, this.shapeFill));
