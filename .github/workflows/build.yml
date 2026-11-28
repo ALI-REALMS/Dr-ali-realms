@@ -16,12 +16,21 @@ jobs:
           gradle-version: 9.4.0
       - name: Build
         run: gradle build --stacktrace || true
-      - name: API dump
+      - name: Sources
         run: |
-          MC=$(find ~/.gradle -name "minecraft-merged*1.21.11*.jar" -o -name "*minecraft*mapped*1.21.11*.jar" | head -5); echo "$MC"
-          J=$(echo "$MC" | head -1)
-          for c in net.minecraft.client.render.RenderLayer net.minecraft.client.gl.RenderPipelines net.minecraft.client.render.VertexRendering net.minecraft.client.gl.Framebuffer net.minecraft.client.render.BufferBuilder; do echo "=== $c"; javap -cp "$J" -public "$c" 2>&1 | head -80; done
-          ls ~/.gradle/caches/fabric-loom 2>/dev/null | head
+          gradle genSources --stacktrace || true
+          mkdir -p dump
+          find ~/.gradle -name "*sources*.jar" | grep -i "minecraft\|fabric-rendering\|fabric-api" | head -20 > dump/list.txt
+          cat dump/list.txt
+          for f in $(cat dump/list.txt); do cp "$f" dump/ || true; done
+          find ~/.gradle -name "fabric-rendering-v1*.jar" | head -3 >> dump/list.txt
+          for f in $(find ~/.gradle -name "fabric-rendering-v1*.jar" | head -2); do cp "$f" dump/; done
+          unzip -l libs/bbs-2.7-1.21.11.jar | grep -i "client/BBSRendering\|FilmEvents\|ShaderProgram" > dump/bbs-classes.txt || true
+          for c in mchorse.bbs_mod.client.BBSRendering mchorse.bbs_mod.film.FilmEvents mchorse.bbs_mod.camera.clips.CameraClip; do javap -p -cp libs/bbs-2.7-1.21.11.jar $c > dump/$c.txt 2>&1 || true; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dump
+          path: dump
       - uses: actions/upload-artifact@v4
         with:
           name: impactfx-mc1.21.11
