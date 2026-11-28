@@ -7,6 +7,8 @@ import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.util.math.Vec3d;
+import mchorse.bbs_mod.utils.pose.Transform;
+import org.joml.Matrix4f;
 
 import java.util.List;
 
@@ -60,8 +62,12 @@ public final class RiftRenderer
         context.camera().getRotation().transform(0F, 1F, 0F, PowerRenderer.camUp);
         PowerRenderer.m = context.matrixStack().peek().getPositionMatrix();
 
+        Matrix4f base = PowerRenderer.m;
+
         for (RiftClip clip : clips)
         {
+            PowerRenderer.m = base;
+
             if (!clip.enabled.get() || !clip.isInside(tick))
             {
                 continue;
@@ -121,9 +127,13 @@ public final class RiftRenderer
             float fx = -(float) Math.sin(yawRad), fz = (float) Math.cos(yawRad);
             float rx = fz, rz = -fx;                      /* horizontal right */
             float dist = clip.dist.get();
-            float cx = (float) (x - cam.x) + clip.offX.get() + fx * dist;
-            float cy = (float) (y - cam.y) + clip.offY.get();
-            float cz = (float) (z - cam.z) + clip.offZ.get() + fz * dist;
+            Transform xt = clip.xform.get();
+            float[] lo = FxXform.local(xt, fx, fz, rx, rz);
+            float cx = (float) (x - cam.x) + clip.offX.get() + fx * dist + lo[0];
+            float cy = (float) (y - cam.y) + clip.offY.get() + lo[1];
+            float cz = (float) (z - cam.z) + clip.offZ.get() + fz * dist + lo[2];
+
+            PowerRenderer.m = FxXform.around(base, xt, cx, cy, cz);
             float p = clamp01(rel / duration);
             float time = rel / 20F * clip.pulse.get();
             float L = clip.length.get(), W = clip.width.get();
@@ -133,9 +143,7 @@ public final class RiftRenderer
 
             if (ty >= 3)
             {
-                float gx = (float) (x - cam.x) + clip.offX.get() + fx * dist;
-                float gy = (float) (y - cam.y) + clip.offY.get();
-                float gz = (float) (z - cam.z) + clip.offZ.get() + fz * dist;
+                float gx = cx, gy = cy, gz = cz;
 
                 special(ty, clip, gx, gy, gz, rx, rz, p, time, L, W, seed);
 

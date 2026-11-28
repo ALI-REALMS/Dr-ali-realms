@@ -8,6 +8,7 @@ import mchorse.bbs_mod.ui.film.clips.UIClip;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.input.UIColor;
+import mchorse.bbs_mod.ui.framework.elements.input.UIPropTransform;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class UIPowerClip extends UIClip<PowerClip>
     private List<UIElement> presetButtons;
 
     public UITrackpad type, actor, offX, offY, offZ, radius, height, scale, count, speed, intensity, seed;
+    public UIPropTransform xform;
     public UIColor core, edge;
 
     public UIPowerClip(PowerClip clip, IUIClipsDelegate editor)
@@ -68,6 +70,7 @@ public class UIPowerClip extends UIClip<PowerClip>
         this.speed = this.f(c.speed, "Speed", 0, 10);
         this.intensity = this.f(c.intensity, "Brightness", 0, 3);
         this.seed = this.i(c.seed, "Seed", 0, 9999);
+        this.xform = this.transform(c.xform);
         this.core = this.color(c.core);
         this.edge = this.color(c.edge);
     }
@@ -79,6 +82,7 @@ public class UIPowerClip extends UIClip<PowerClip>
 
         this.panels.add(this.section(IKey.raw("Presets"), this.presetButtons.toArray(new UIElement[0])));
         this.panels.add(this.section(IKey.raw("Effect"), this.type, this.actor, this.offX, this.offY, this.offZ));
+        this.panels.add(this.section(IKey.raw("Transform: move / rotate / scale (like a character)"), this.xform));
         this.panels.add(this.section(IKey.raw("Core color"), this.core));
         this.panels.add(this.section(IKey.raw("Edge color"), this.edge));
         this.panels.add(this.section(IKey.raw("Shape"), this.radius, this.height, this.scale, this.count, this.speed, this.intensity, this.seed));

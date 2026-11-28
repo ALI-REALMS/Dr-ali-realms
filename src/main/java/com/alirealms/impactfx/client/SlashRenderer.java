@@ -12,6 +12,7 @@ import mchorse.bbs_mod.forms.forms.Form;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import mchorse.bbs_mod.utils.pose.Transform;
 
 import java.util.ArrayDeque;
 import java.util.List;
@@ -70,8 +71,12 @@ public final class SlashRenderer
         context.camera().getRotation().transform(0F, 1F, 0F, PowerRenderer.camUp);
         PowerRenderer.m = context.matrixStack().peek().getPositionMatrix();
 
+        Matrix4f base = PowerRenderer.m;
+
         for (SlashClip clip : clips)
         {
+            PowerRenderer.m = base;
+
             int duration = Math.max(1, clip.duration.get());
             float rel = (tick - clip.tick.get()) + partial;
             boolean inside = clip.isInside(tick);
@@ -145,8 +150,11 @@ public final class SlashRenderer
                 continue;
             }
 
-            /* attach the whole effect to a bone (any body part) */
-            if (clip.attach.get() == 1)
+            /* attach the whole effect to a bone (any body part): explicit toggle, or simply by giving a bone name / number */
+            boolean attached = clip.attach.get() == 1 || clip.boneIndex.get() > 0 || !clip.bone.get().trim().isEmpty();
+            Transform xt = clip.xform.get();
+
+            if (attached)
             {
                 Matrix4f bm = boneMatrix(controller, clip, replays.get(index), entity, cam, partial, x, y, z);
                 int axs = clip.axis.get();
@@ -156,9 +164,12 @@ public final class SlashRenderer
 
                 float ox = TMP.x, oy = TMP.y, oz = TMP.z;
 
-                cx = ox + clip.offX.get();
-                cy = oy + clip.offY.get() - 1.1F;
-                cz = oz + clip.offZ.get();
+                /* the transform's translation is expressed in the bone's own space, the offsets stay in world axes */
+                bm.transformPosition(xt.translate.x, xt.translate.y, xt.translate.z, TMP);
+
+                cx = TMP.x + clip.offX.get();
+                cy = TMP.y + clip.offY.get() - 1.1F;
+                cz = TMP.z + clip.offZ.get();
 
                 if (clip.followRot.get() == 1)
                 {
@@ -174,6 +185,14 @@ public final class SlashRenderer
                     }
                 }
             }
+            else
+            {
+                float[] lo = FxXform.local(xt, fx, fz, rx, rz);
+
+                cx += lo[0]; cy += lo[1]; cz += lo[2];
+            }
+
+            PowerRenderer.m = FxXform.around(base, xt, cx, cy, cz);
 
             Gfx.begin();
 
@@ -337,17 +356,21 @@ public final class SlashRenderer
         }
 
         double tx = 0, ty = 0, tz = 0;
+        float brx = 0, bry = 0, brz = 0, trx = 0, try_ = 0, trz = 0;
 
         if (live)
         {
-            Matrix4f bm = boneMatrix(controller, clip, replay, entity, cam, partial, ex, ey, ez);
+            Matrix4f bm = FxXform.child(boneMatrix(controller, clip, replay, entity, cam, partial, ex, ey, ez), clip.xform.get());
 
             bm.transformPosition(ax * reach * 0.3F, ay * reach * 0.3F, az * reach * 0.3F, TMP);
+
+            brx = TMP.x; bry = TMP.y; brz = TMP.z;
 
             double bx = TMP.x + cam.x, by = TMP.y + cam.y, bz = TMP.z + cam.z;
 
             bm.transformPosition(ax * reach, ay * reach, az * reach, TMP);
 
+            trx = TMP.x; try_ = TMP.y; trz = TMP.z;
             tx = TMP.x + cam.x; ty = TMP.y + cam.y; tz = TMP.z + cam.z;
 
             if (last == null || rel > last[0] + 0.001F)
@@ -363,12 +386,20 @@ public final class SlashRenderer
             hist.pollFirst();
         }
 
-        if (hist.size() < 2)
+        if (hist.size() < 2 && !live)
         {
             return;
         }
 
         Gfx.begin();
+
+        /* the blade itself, visible even when the hand is not moving */
+        if (live)
+        {
+            RiftRenderer.ribbon(brx, bry, brz, trx, try_, trz, reach * 0.035F, reach * 0.02F, 0.6F, 0.35F, 0.6F);
+            RiftRenderer.ribbon(brx, bry, brz, trx, try_, trz, reach * 0.012F, reach * 0.008F, 0F, 0.9F, 1F);
+            RiftRenderer.ribbonHot(brx, bry, brz, trx, try_, trz, reach * 0.006F, 1F);
+        }
 
         double[] prev = null;
 

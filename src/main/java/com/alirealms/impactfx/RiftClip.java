@@ -3,7 +3,9 @@ package com.alirealms.impactfx;
 import mchorse.bbs_mod.camera.clips.CameraClip;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
+import mchorse.bbs_mod.settings.values.core.ValueTransform;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
+import mchorse.bbs_mod.utils.pose.Transform;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 
@@ -28,6 +30,8 @@ public class RiftClip extends CameraClip
     public final ValueFloat pulse = new ValueFloat("pulse", 1F, 0F, 6F);
     public final ValueFloat intensity = new ValueFloat("intensity", 1F, 0F, 3F);
     public final ValueInt seed = new ValueInt("seed", 11, 0, 9999);
+    /** position / rotation / size of the effect, edited like a character's transform */
+    public final ValueTransform xform = new ValueTransform("xform", new Transform());
     public final ValueInt core = new ValueInt("core", 0xFFFFFF);
     public final ValueInt edge = new ValueInt("edge", 0x9A2BFF);
     public final ValueInt voidColor = new ValueInt("voidColor", 0x120022);
@@ -51,6 +55,7 @@ public class RiftClip extends CameraClip
         this.add(this.pulse);
         this.add(this.intensity);
         this.add(this.seed);
+        this.add(this.xform);
         this.add(this.core);
         this.add(this.edge);
         this.add(this.voidColor);

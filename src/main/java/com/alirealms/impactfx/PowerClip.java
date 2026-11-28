@@ -3,7 +3,9 @@ package com.alirealms.impactfx;
 import mchorse.bbs_mod.camera.clips.CameraClip;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
+import mchorse.bbs_mod.settings.values.core.ValueTransform;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
+import mchorse.bbs_mod.utils.pose.Transform;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 
@@ -25,6 +27,8 @@ public class PowerClip extends CameraClip
     public final ValueFloat speed = new ValueFloat("speed", 1F, 0F, 10F);
     public final ValueFloat intensity = new ValueFloat("intensity", 1F, 0F, 3F);
     public final ValueInt seed = new ValueInt("seed", 3, 0, 9999);
+    /** position / rotation / size of the effect, edited like a character's transform */
+    public final ValueTransform xform = new ValueTransform("xform", new Transform());
     public final ValueInt core = new ValueInt("core", 0xFFF2A0);
     public final ValueInt edge = new ValueInt("edge", 0xFF8A00);
 
@@ -44,6 +48,7 @@ public class PowerClip extends CameraClip
         this.add(this.speed);
         this.add(this.intensity);
         this.add(this.seed);
+        this.add(this.xform);
         this.add(this.core);
         this.add(this.edge);
 
