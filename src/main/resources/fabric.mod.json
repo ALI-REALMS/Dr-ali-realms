@@ -4,12 +4,18 @@
   "version": "${version}",
   "name": "Impact Frame FX (BBS addon)",
   "description": "Impact-frame VFX clip for BBS: white world, black distorted characters, stars, speed lines, shockwave. Colors editable.",
-  "authors": ["ALI-REALMS"],
+  "authors": [
+    "ALI-REALMS"
+  ],
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "client": ["com.alirealms.impactfx.client.ImpactClient"],
-    "bbs-addon": ["com.alirealms.impactfx.ImpactAddon"]
+    "client": [
+      "com.alirealms.impactfx.client.ImpactClient"
+    ],
+    "bbs-addon": [
+      "com.alirealms.impactfx.ImpactAddon"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.16.14",
@@ -17,5 +23,8 @@
     "java": ">=21",
     "fabric-api": "*",
     "bbs": "*"
-  }
+  },
+  "mixins": [
+    "impactfx.mixins.json"
+  ]
 }

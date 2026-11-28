@@ -92,6 +92,15 @@ public final class ImpactRenderer
         Gfx.initLate();
     }
 
+    /** called from the InGameHud mixin (before BBS cancels the HUD); only used with a shader pack */
+    public static void renderHud()
+    {
+        if (Compat.iris())
+        {
+            run(true);
+        }
+    }
+
     private static void u4(String name, float a, float b, float c, float d)
     {
         GlUniform u = program.getUniform(name);
