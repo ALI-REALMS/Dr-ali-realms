@@ -16,21 +16,22 @@ jobs:
           gradle-version: 9.4.0
       - name: Build
         run: gradle build --stacktrace || true
-      - name: Sources
+      - name: Print requested sources
         run: |
-          gradle genSources --stacktrace || true
-          mkdir -p dump
-          find ~/.gradle -name "*sources*.jar" | grep -i "minecraft\|fabric-rendering\|fabric-api" | head -20 > dump/list.txt
-          cat dump/list.txt
-          for f in $(cat dump/list.txt); do cp "$f" dump/ || true; done
-          find ~/.gradle -name "fabric-rendering-v1*.jar" | head -3 >> dump/list.txt
-          for f in $(find ~/.gradle -name "fabric-rendering-v1*.jar" | head -2); do cp "$f" dump/; done
-          unzip -l libs/bbs-2.7-1.21.11.jar | grep -i "client/BBSRendering\|FilmEvents\|ShaderProgram" > dump/bbs-classes.txt || true
-          for c in mchorse.bbs_mod.client.BBSRendering mchorse.bbs_mod.film.FilmEvents mchorse.bbs_mod.camera.clips.CameraClip; do javap -p -cp libs/bbs-2.7-1.21.11.jar $c > dump/$c.txt 2>&1 || true; done
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dump
-          path: dump
+          gradle genSources --stacktrace > /dev/null 2>&1 || true
+          MS=$(find ~/.gradle -name "minecraft-merged-1.21.11*sources.jar" | head -1)
+          FS=$(find ~/.gradle -name "fabric-rendering-v1*sources.jar" | head -1)
+          echo "MS=$MS FS=$FS"
+          [ -f dump-request.txt ] && while read -r line; do
+            [ -z "$line" ] && continue
+            echo "########## $line"
+            case "$line" in
+              bbs:*) javap -p -cp libs/bbs-2.7-1.21.11.jar "${line#bbs:}" ;;
+              fapi:*) unzip -p "$FS" "${line#fapi:}" 2>&1 | head -400 ;;
+              find:*) (unzip -l "$MS"; unzip -l "$FS") | grep -i "${line#find:}" ;;
+              *) unzip -p "$MS" "$line" 2>&1 | head -600 ;;
+            esac
+          done < dump-request.txt
       - uses: actions/upload-artifact@v4
         with:
           name: impactfx-mc1.21.11
