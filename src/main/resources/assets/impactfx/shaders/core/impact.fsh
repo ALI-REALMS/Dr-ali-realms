@@ -78,7 +78,10 @@ vec2 rayBody(vec3 d, vec4 act, float R, float H, float sceneDist, float band) {
 float cylDist(vec3 wp, vec4 act, float Rc, float H) {
     if (act.w < 0.5) return 100.0;
     float dh = length(wp.xz - act.xz) - Rc;
-    float dy = max(act.y + 0.03 - wp.y, wp.y - (act.y + H + 0.08));
+    // height is trimmed from below: a shorter height removes the feet, never the head
+    float top = max(H, 2.0) + 0.1;
+    float bot = max(0.03, 2.0 - H);
+    float dy = max(act.y + bot - wp.y, wp.y - (act.y + top));
     return max(dh, dy);
 }
 
@@ -412,7 +415,7 @@ void main() {
     else if (cm == 2) charCol = vec3(1.0) - world;
     else if (cm == 3) {
         float Ln = clamp((dot(scene, vec3(0.299, 0.587, 0.114)) - 0.05) / 0.85, 0.0, 1.0);
-        vec3 onDark = ColInk2.rgb * mix(mix(0.45, 1.0, Ln), 1.0, shade * 0.8);
+        vec3 onDark = ColInk2.rgb * mix(mix(0.5, 1.0, Ln), 1.0, shade) * (1.0 + 0.2 * shade);
         vec3 onBright = mix(ColInk.rgb, vec3(0.3), pow(1.0 - Ln, 1.6) * (1.0 - shade));
         charCol = mix(onDark, onBright, smoothstep(0.35, 0.65, wl));
     }
@@ -422,6 +425,11 @@ void main() {
 
     // aura glow around the actor
     float halo = aura * exp(-max(edge, 0.0) / max(auraW, 0.001)) * (1.0 - mask);
+    if (cm == 3) {
+        // waves travelling outward over the floor glow
+        float ph = max(edge, 0.0) / max(auraW, 0.001);
+        halo *= 0.55 + 0.45 * sin(ph * 9.0 - P0.x * 0.45);
+    }
     col = mix(col, acc, clamp(halo, 0.0, 1.0));
 
     // speed lines
