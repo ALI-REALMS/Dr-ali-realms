@@ -56,7 +56,7 @@ final class Gfx
 
     static void initLate()
     {
-        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.START_MAIN.register((context) -> clearLate());
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.START_MAIN.register((context) -> clearLate());
     }
 
     static float partial(WorldRenderContext context)
