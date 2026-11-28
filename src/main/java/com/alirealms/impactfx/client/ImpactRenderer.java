@@ -1,32 +1,34 @@
 package com.alirealms.impactfx.client;
 
 import com.alirealms.impactfx.ImpactClip;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import mchorse.bbs_mod.api.client.events.FilmEvents;
 import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.forms.entities.IEntity;
-import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.GlUniform;
-import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gl.SimpleFramebuffer;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.gl.UniformType;
+import net.minecraft.client.render.Camera;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.system.MemoryStack;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalInt;
 
 /**
  * Full-screen post effect. The BBS film controller that rendered this frame is remembered in
@@ -35,7 +37,8 @@ import java.util.List;
  */
 public final class ImpactRenderer
 {
-    private static ShaderProgram program;
+    private static RenderPipeline pipeline;
+    private static final Map<String, float[]> uniforms = new LinkedHashMap<>();
     private static SimpleFramebuffer copy;
     private static volatile BaseFilmController pending;
     private static Quaternionf snapRot = new Quaternionf();
@@ -46,13 +49,6 @@ public final class ImpactRenderer
 
     public static void init()
     {
-        CoreShaderRegistrationCallback.EVENT.register((context) ->
-            {
-                context.register(Identifier.of("impactfx", "impact"), VertexFormats.POSITION, (p) -> program = p);
-                context.register(Identifier.of("impactfx", "glow"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glow = p);
-                context.register(Identifier.of("impactfx", "glowlate"), VertexFormats.POSITION_COLOR, (p) -> Gfx.glowLate = p);
-            });
-
       FilmEvents.RENDER_AFTER.register((controller, context) ->
 {
     pending = controller != null
@@ -63,13 +59,15 @@ public final class ImpactRenderer
 
     if (pending != null)
     {
-        snapRot = new Quaternionf(context.camera().getRotation());
-        snapPos = context.camera().getPos();
-        snapProj = new Matrix4f(RenderSystem.getProjectionMatrix());
+        Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
+
+        snapRot = new Quaternionf(camera.getRotation());
+        snapPos = camera.getCameraPos();
+        snapProj = Gfx.projection();
     }
 });
 
-        WorldRenderEvents.LAST.register((context) ->
+        WorldRenderEvents.END_MAIN.register((context) ->
         {
             run(false);
         });
@@ -79,12 +77,7 @@ public final class ImpactRenderer
 
     private static void u4(String name, float a, float b, float c, float d)
     {
-        GlUniform u = program.getUniform(name);
-
-        if (u != null)
-        {
-            u.set(a, b, c, d);
-        }
+        uniforms.put(name, new float[] {a, b, c, d});
     }
 
     private static void color(String name, int rgb)
@@ -98,7 +91,7 @@ public final class ImpactRenderer
 
     pending = null;
 
-    if (controller == null || program == null || controller.film == null || controller.film.camera == null)
+    if (controller == null || false || controller.film == null || controller.film.camera == null)
     {
         return;
     }
@@ -146,37 +139,23 @@ public final class ImpactRenderer
 
         if (copy == null)
         {
-            copy = new SimpleFramebuffer(w, h, true, MinecraftClient.IS_SYSTEM_MAC);
+            copy = new SimpleFramebuffer("impactfx copy", w, h, true);
         }
         else if (copy.textureWidth != w || copy.textureHeight != h)
         {
-            copy.resize(w, h, MinecraftClient.IS_SYSTEM_MAC);
+            copy.resize(w, h);
         }
 
         /* copy color + depth of the finished world */
-        GlStateManager._glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.fbo);
-        GlStateManager._glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, copy.fbo);
-        GL30.glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT, GL11.GL_NEAREST);
-        main.beginWrite(false);
+        CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+
+        encoder.copyTextureToTexture(main.getColorAttachment(), copy.getColorAttachment(), 0, 0, 0, 0, 0, w, h);
+        copy.copyDepthFrom(main);
 
         /* matrices */
         Matrix4f invProj = new Matrix4f(snapProj).invert();
         Matrix4f camRot = new Matrix4f().rotation(snapRot);
         Vec3d cam = snapPos;
-
-        GlUniform g = program.getUniform("InvProj");
-
-        if (g != null)
-        {
-            g.set(invProj);
-        }
-
-        g = program.getUniform("CamRot");
-
-        if (g != null)
-        {
-            g.set(camRot);
-        }
 
         ImpactClip c = best;
 
@@ -229,32 +208,54 @@ public final class ImpactRenderer
             u4("Actor" + n, 0F, 0F, 0F, 0F);
         }
 
-        /* draw */
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
-        RenderSystem.disableBlend();
-        RenderSystem.setShader(() -> program);
-        RenderSystem.setShaderTexture(0, copy.getColorAttachment());
-        RenderSystem.setShaderTexture(1, copy.getDepthAttachment());
+        /* uniform block, in std140 order */
+        String[] order = {"P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "ColS1", "ColS2", "ColBg", "ColInk", "ColInk2",
+            "ColAccent", "ColStar", "Actor0", "Actor1", "Actor2", "Actor3", "Actor4", "Actor5"};
+        GpuBuffer ubo;
 
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-
-        buffer.vertex(-1F, -1F, 0F);
-        buffer.vertex(1F, -1F, 0F);
-        buffer.vertex(1F, 1F, 0F);
-        buffer.vertex(-1F, 1F, 0F);
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
-
-        RenderSystem.depthMask(true);
-
-        if (hud)
+        try (MemoryStack stack = MemoryStack.stackPush())
         {
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
+            Std140Builder b = Std140Builder.onStack(stack, 128 + order.length * 16);
+
+            b.putMat4f(invProj);
+            b.putMat4f(camRot);
+
+            for (String key : order)
+            {
+                float[] v = uniforms.getOrDefault(key, new float[4]);
+
+                b.putVec4(v[0], v[1], v[2], v[3]);
+            }
+
+            ubo = RenderSystem.getDevice().createBuffer(() -> "impactfx data", GpuBuffer.USAGE_UNIFORM, b.get());
         }
-        else
+
+        if (pipeline == null)
         {
-            RenderSystem.enableDepthTest();
+            pipeline = RenderPipeline.builder()
+                .withLocation(Identifier.of("impactfx", "pipeline/impact"))
+                .withVertexShader(Identifier.of("impactfx", "core/impact"))
+                .withFragmentShader(Identifier.of("impactfx", "core/impact"))
+                .withSampler("Sampler0")
+                .withSampler("Sampler1")
+                .withUniform("ImpactData", UniformType.UNIFORM_BUFFER)
+                .withVertexFormat(com.mojang.blaze3d.vertex.VertexFormat.EMPTY, VertexFormat.DrawMode.TRIANGLES)
+                .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                .withDepthWrite(false)
+                .withCull(false)
+                .withoutBlend()
+                .build();
         }
+
+        try (RenderPass pass = encoder.createRenderPass(() -> "impactfx", main.getColorAttachmentView(), OptionalInt.empty()))
+        {
+            pass.setPipeline(pipeline);
+            pass.setUniform("ImpactData", ubo);
+            pass.bindTexture("Sampler0", copy.getColorAttachmentView(), RenderSystem.getSamplerCache().get(FilterMode.NEAREST));
+            pass.bindTexture("Sampler1", copy.getDepthAttachmentView(), RenderSystem.getSamplerCache().get(FilterMode.NEAREST));
+            pass.draw(0, 3);
+        }
+
+        ubo.close();
     }
 }

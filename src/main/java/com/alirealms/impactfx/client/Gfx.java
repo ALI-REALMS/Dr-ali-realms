@@ -1,247 +1,176 @@
 package com.alirealms.impactfx.client;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.UniformType;
 import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.gl.GlUniform;
-import net.minecraft.client.gl.ShaderProgram;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.client.util.BufferAllocator;
+import net.minecraft.util.Identifier;
 import org.joml.Matrix4f;
-import org.joml.Vector4f;
+import org.lwjgl.system.MemoryStack;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.OptionalInt;
 
 /**
- * Tiny drawing layer. This is the ONLY file that differs between Minecraft versions
- * (1.21.1 here, 1.20.1 on the other branch).
+ * Tiny drawing layer for Minecraft 1.21.11 (new RenderPipeline / RenderPass API).
+ * Vertices are transformed to view space on the CPU, then projected by our own shader.
  */
 final class Gfx
 {
-    private static BufferBuilder buffer;
+    private static RenderPipeline add;
+    private static RenderPipeline normal;
 
-    /* shader-pack (Iris) mode: geometry is recorded and drawn later with our own shader */
-    static ShaderProgram glow;
-    static ShaderProgram glowLate;
-    private static boolean late;
+    private static BufferAllocator allocator;
+    private static BufferBuilder buffer;
     private static boolean additive = true;
     private static Matrix4f proj = new Matrix4f();
-    private static final Vector4f tmp = new Vector4f();
-    private static final List<Batch> queue = new ArrayList<>();
-    private static Batch cur;
-    private static int queued;
-
-    private static final class Batch
-    {
-        final boolean add;
-        float[] d = new float[7 * 64];
-        int n;
-
-        Batch(boolean add)
-        {
-            this.add = add;
-        }
-
-        void put(float x, float y, float z, float r, float g, float b, float a)
-        {
-            if (n * 7 + 7 > d.length)
-            {
-                d = java.util.Arrays.copyOf(d, d.length * 2);
-            }
-
-            int i = n * 7;
-
-            d[i] = x; d[i + 1] = y; d[i + 2] = z; d[i + 3] = r; d[i + 4] = g; d[i + 5] = b; d[i + 6] = a;
-            n++;
-        }
-    }
-
-
-    static void initLate()
-    {
-        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.LAST.register((context) -> flushLate());
-    }
-
-    static void flushLate()
-    {
-        if (queue.isEmpty())
-        {
-            return;
-        }
-
-        ShaderProgram p = glowLate;
-
-        if (p != null)
-        {
-            RenderSystem.setShader(() -> p);
-
-            GlUniform u = p.getUniform("Proj");
-
-            if (u != null)
-            {
-                u.set(proj);
-            }
-
-            RenderSystem.enableBlend();
-            RenderSystem.disableCull();
-            RenderSystem.depthMask(false);
-            RenderSystem.disableDepthTest();
-
-            for (Batch b : queue)
-            {
-                RenderSystem.blendFunc(770, b.add ? 1 : 771);
-
-                BufferBuilder bb = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-
-                for (int i = 0; i < b.n; i++)
-                {
-                    int k = i * 7;
-
-                    bb.vertex(b.d[k], b.d[k + 1], b.d[k + 2]).color(b.d[k + 3], b.d[k + 4], b.d[k + 5], b.d[k + 6]);
-                }
-
-                BufferRenderer.drawWithGlobalProgram(bb.end());
-            }
-
-            RenderSystem.enableCull();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.depthMask(true);
-        }
-
-        queue.clear();
-        queued = 0;
-    }
+    private static int count;
 
     private Gfx() {}
 
+    private static RenderPipeline pipeline(String name, BlendFunction blend)
+    {
+        return RenderPipeline.builder()
+            .withLocation(Identifier.of("impactfx", "pipeline/" + name))
+            .withVertexShader(Identifier.of("impactfx", "core/glow"))
+            .withFragmentShader(Identifier.of("impactfx", "core/glow"))
+            .withUniform("GlowData", UniformType.UNIFORM_BUFFER)
+            .withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.QUADS)
+            .withBlend(blend)
+            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+            .withDepthWrite(false)
+            .withCull(false)
+            .build();
+    }
+
+    static void initLate()
+    {
+    }
+
     static float partial(WorldRenderContext context)
     {
-        return MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(false);
+        return MinecraftClient.getInstance().getRenderTickCounter().getTickProgress(false);
+    }
+
+    /** the projection matrix of the world camera */
+    static Matrix4f projection()
+    {
+        Matrix4f p = mchorse.bbs_mod.client.BBSRendering.getWorldProjection();
+
+        if (p == null || p.m00() == 0F || Float.isNaN(p.m00()))
+        {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            float fov = (float) Math.toRadians(mc.options.getFov().getValue());
+            float aspect = mc.getWindow().getFramebufferWidth() / (float) Math.max(1, mc.getWindow().getFramebufferHeight());
+
+            return new Matrix4f().perspective(fov, aspect, 0.05F, 1024F);
+        }
+
+        return new Matrix4f(p);
     }
 
     /** additive glow state */
     static void setup()
     {
-        late = Compat.iris() && glowLate != null;
-
-        if (late)
+        if (add == null)
         {
-            proj = new Matrix4f(RenderSystem.getProjectionMatrix());
-            additive = true;
-            return;
+            add = pipeline("glow_add", BlendFunction.LIGHTNING);
+            normal = pipeline("glow_normal", BlendFunction.TRANSLUCENT);
         }
 
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-
-        RenderSystem.enableBlend();
-        RenderSystem.blendFunc(770, 1);
-        RenderSystem.disableCull();
-        RenderSystem.depthMask(false);
-        RenderSystem.enableDepthTest();
+        proj = projection();
+        additive = true;
     }
 
     /** normal alpha blending (for dark voids) */
     static void blendNormal()
     {
-        if (late)
-        {
-            additive = false;
-            return;
-        }
-
-        RenderSystem.blendFunc(770, 771);
+        additive = false;
     }
 
     /** additive glow blending */
     static void blendAdd()
     {
-        if (late)
-        {
-            additive = true;
-            return;
-        }
-
-        RenderSystem.blendFunc(770, 1);
+        additive = true;
     }
 
     static void cleanup()
     {
-        if (late)
-        {
-            return;
-        }
-
-        RenderSystem.enableCull();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.depthMask(true);
-        RenderSystem.disableBlend();
     }
 
-    private static int count;
+    private static boolean pipe;
 
     static void begin()
     {
         count = 0;
+        pipe = additive;
 
-        if (late)
+        if (allocator == null)
         {
-            cur = new Batch(additive);
-            return;
+            allocator = new BufferAllocator(1 << 16);
         }
 
-        buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buffer = new BufferBuilder(allocator, VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
     }
 
     static void v(Matrix4f m, float x, float y, float z, float r, float g, float b, float a)
     {
-        if (late)
-        {
-            m.transform(x, y, z, 1F, tmp);
-            cur.put(tmp.x, tmp.y, tmp.z, clamp(r) / 255F, clamp(g) / 255F, clamp(b) / 255F, clamp(a) / 255F);
-            return;
-        }
-
         count++;
         buffer.vertex(m, x, y, z).color(clamp(r), clamp(g), clamp(b), clamp(a));
     }
 
     static void end()
     {
-        if (late)
+        BuiltBuffer built = buffer == null ? null : buffer.endNullable();
+
+        buffer = null;
+
+        if (built == null)
         {
-            if (cur != null && cur.n > 0)
-            {
-                if (queued > 600000)
-                {
-                    queue.clear();
-                    queued = 0;
-                }
-
-                queued += cur.n;
-                queue.add(cur);
-            }
-
-            cur = null;
             return;
         }
 
-        if (count == 0)
-        {
-            /* an empty batch would make BufferBuilder.end() throw: add one invisible quad */
-            for (int i = 0; i < 4; i++)
-            {
-                v(new Matrix4f(), 0F, 0F, 0F, 0F, 0F, 0F, 0F);
-            }
-        }
+        RenderPipeline p = pipe ? add : normal;
 
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
-        buffer = null;
+        try (built)
+        {
+            GpuBuffer vb = p.getVertexFormat().uploadImmediateVertexBuffer(built.getBuffer());
+            RenderSystem.ShapeIndexBuffer shape = RenderSystem.getSequentialBuffer(built.getDrawParameters().mode());
+            GpuBuffer ib = shape.getIndexBuffer(built.getDrawParameters().indexCount());
+            Framebuffer fb = MinecraftClient.getInstance().getFramebuffer();
+            GpuBuffer ubo;
+
+            try (MemoryStack stack = MemoryStack.stackPush())
+            {
+                Std140Builder b = Std140Builder.onStack(stack, 64);
+
+                b.putMat4f(proj);
+                ubo = RenderSystem.getDevice().createBuffer(() -> "impactfx glow", GpuBuffer.USAGE_UNIFORM, b.get());
+            }
+
+            try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder()
+                .createRenderPass(() -> "impactfx glow", fb.getColorAttachmentView(), OptionalInt.empty()))
+            {
+                pass.setPipeline(p);
+                pass.setUniform("GlowData", ubo);
+                pass.setVertexBuffer(0, vb);
+                pass.setIndexBuffer(ib, shape.getIndexType());
+                pass.drawIndexed(0, 0, built.getDrawParameters().indexCount(), 1);
+            }
+
+            ubo.close();
+        }
     }
 
     private static int clamp(float v)

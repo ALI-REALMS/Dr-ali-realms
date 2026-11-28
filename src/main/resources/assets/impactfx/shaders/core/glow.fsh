@@ -1,7 +1,8 @@
-#version 150
-in vec4 vertexColor;
+#version 330
+
+in vec4 vColor;
 out vec4 fragColor;
+
 void main() {
-    if (vertexColor.a <= 0.0) discard;
-    fragColor = vertexColor;
+    fragColor = vColor;
 }

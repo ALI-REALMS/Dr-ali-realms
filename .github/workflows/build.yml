@@ -15,26 +15,7 @@ jobs:
         with:
           gradle-version: 9.4.0
       - name: Build
-        run: gradle build --stacktrace || true
-      - name: Print requested sources
-        run: |
-          gradle genSources --stacktrace > /dev/null 2>&1 || true
-          MS=$(find . ~/.gradle -name "*merged*-sources.jar" | head -1)
-          FJ=$(find ~/.gradle -name "fabric-rendering-v1-16*.jar" | head -1)
-          echo "MS=$MS FJ=$FJ"
-          unzip -l "$MS" | awk '{print $4}' > ms.txt
-          unzip -l "$FJ" | awk '{print $4}' > fj.txt
-          [ -f dump-request.txt ] && while read -r line; do
-            [ -z "$line" ] && continue
-            echo "########## $line"
-            case "$line" in
-              bbs:*) javap -p -cp libs/bbs-2.7-1.21.11.jar "${line#bbs:}" ;;
-              fapi:*) javap -p -cp "$FJ" "${line#fapi:}" ;;
-              ls:*) grep -E "${line#ls:}" ms.txt | head -60; grep -E "${line#ls:}" fj.txt | head -40 ;;
-              sig:*) for f in $(grep -E "${line#sig:}" ms.txt | head -8); do echo "--- $f"; unzip -p "$MS" "$f" | grep -E "^    [^ /*@}].*[;{]$" | head -120; done ;;
-              *) for f in $(grep -E "$line" ms.txt | head -4); do echo "--- $f"; unzip -p "$MS" "$f" | head -330; done ;;
-            esac
-          done < dump-request.txt
+        run: gradle build --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: impactfx-mc1.21.11

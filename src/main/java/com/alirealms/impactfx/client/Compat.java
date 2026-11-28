@@ -37,7 +37,7 @@ final class Compat
 
         try
         {
-            return mchorse.bbs_mod.client.BBSRendering.isIrisWorldShadersEnabled();
+            return mchorse.bbs_mod.client.BBSRendering.isIrisShadersEnabled();
         }
         catch (Throwable t)
         {

@@ -5,7 +5,7 @@ import mchorse.bbs_mod.api.client.events.FilmEvents;
 import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.entities.IEntity;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.minecraft.util.math.Vec3d;
 import mchorse.bbs_mod.utils.pose.Transform;
 import org.joml.Matrix4f;
@@ -40,7 +40,7 @@ public final class RiftRenderer
 
     private static void render(BaseFilmController controller, WorldRenderContext context)
     {
-        if (controller == null || controller.film == null || controller.film.camera == null || context.matrixStack() == null)
+        if (controller == null || controller.film == null || controller.film.camera == null)
         {
             return;
         }
@@ -54,13 +54,14 @@ public final class RiftRenderer
 
         int tick = controller.getTick();
         float partial = Gfx.partial(context);
-        Vec3d cam = context.camera().getPos();
+        net.minecraft.client.render.Camera camera = net.minecraft.client.MinecraftClient.getInstance().gameRenderer.getCamera();
+        Vec3d cam = camera.getCameraPos();
         List<Replay> replays = controller.film.replays.getList();
         boolean began = false;
 
-        context.camera().getRotation().transform(1F, 0F, 0F, PowerRenderer.camRight);
-        context.camera().getRotation().transform(0F, 1F, 0F, PowerRenderer.camUp);
-        PowerRenderer.m = context.matrixStack().peek().getPositionMatrix();
+        camera.getRotation().transform(1F, 0F, 0F, PowerRenderer.camRight);
+        camera.getRotation().transform(0F, 1F, 0F, PowerRenderer.camUp);
+        PowerRenderer.m = new Matrix4f().rotation(new org.joml.Quaternionf(camera.getRotation()).conjugate());
 
         Matrix4f base = PowerRenderer.m;
 

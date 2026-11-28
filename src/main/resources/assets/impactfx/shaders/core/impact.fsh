@@ -1,31 +1,33 @@
-#version 150
+#version 330
 
 uniform sampler2D Sampler0;   // scene color copy
 uniform sampler2D Sampler1;   // scene depth copy
 
-uniform mat4 InvProj;
-uniform mat4 CamRot;
-uniform vec4 P0; // time(ticks), progress 0..1, amount, aspect
-uniform vec4 P1; // mode, threshold, worldMix, distort
-uniform vec4 P2; // actorRadius, actorHeight, aura, auraWidth(cm)
-uniform vec4 P3; // starCount, starSize, starSeed, starRate(changes/sec)
-uniform vec4 P4; // speedLines, shockwave, inkBurst, flash
-uniform vec4 P5; // centerX, centerY, grain, posterize
-uniform vec4 P6; // shape, scale, speed, density
-uniform vec4 P7; // glow, rotation(rad), fill, -
-uniform vec4 ColS1;
-uniform vec4 ColS2;
-uniform vec4 ColBg;
-uniform vec4 ColInk;
-uniform vec4 ColInk2;
-uniform vec4 ColAccent;
-uniform vec4 ColStar;
-uniform vec4 Actor0;
-uniform vec4 Actor1;
-uniform vec4 Actor2;
-uniform vec4 Actor3;
-uniform vec4 Actor4;
-uniform vec4 Actor5;
+layout(std140) uniform ImpactData {
+    mat4 InvProj;
+    mat4 CamRot;
+    vec4 P0; // time(ticks), progress 0..1, amount, aspect
+    vec4 P1; // mode, threshold, worldMix, distort
+    vec4 P2; // actorRadius, actorHeight, aura, auraWidth(cm)
+    vec4 P3; // starCount, starSize, starSeed, starRate(changes/sec)
+    vec4 P4; // speedLines, shockwave, inkBurst, flash
+    vec4 P5; // centerX, centerY, grain, posterize
+    vec4 P6; // shape, scale, speed, density
+    vec4 P7; // glow, rotation(rad), fill, -
+    vec4 ColS1;
+    vec4 ColS2;
+    vec4 ColBg;
+    vec4 ColInk;
+    vec4 ColInk2;
+    vec4 ColAccent;
+    vec4 ColStar;
+    vec4 Actor0;
+    vec4 Actor1;
+    vec4 Actor2;
+    vec4 Actor3;
+    vec4 Actor4;
+    vec4 Actor5;
+};
 
 in vec2 uv;
 out vec4 fragColor;
