@@ -44,4 +44,17 @@ final class Compat
             return false;
         }
     }
+
+    /** BBS renders films again in the shader pack's shadow pass (other camera/projection): effects must skip it */
+    static boolean shadow()
+    {
+        try
+        {
+            return mchorse.bbs_mod.client.BBSRendering.isIrisShadowPass();
+        }
+        catch (Throwable t)
+        {
+            return false;
+        }
+    }
 }

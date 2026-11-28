@@ -23,7 +23,13 @@ public final class RiftRenderer
 
     public static void init()
     {
-        FilmEvents.RENDER_AFTER.register(RiftRenderer::render);
+        FilmEvents.RENDER_AFTER.register((controller, context) ->
+        {
+            if (!Compat.shadow())
+            {
+                render(controller, context);
+            }
+        });
     }
 
     private static float clamp01(float x)
