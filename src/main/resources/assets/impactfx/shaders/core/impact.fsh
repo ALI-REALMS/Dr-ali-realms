@@ -58,6 +58,20 @@ float bodyDist(vec3 wp, vec4 act, float R, float H) {
     return length(wp - c) - rad;
 }
 
+// ray (from camera) vs capsule: returns (edge distance, distance along ray); robust at long range
+vec2 rayBody(vec3 d, vec4 act, float R, float H, float sceneDist) {
+    if (act.w < 0.5) return vec2(100.0, 0.0);
+    vec3 A = act.xyz, v = vec3(0.0, H, 0.0), w0 = -A;
+    float b = dot(d, v), c = H * H, dd = dot(d, w0), e = dot(v, w0);
+    float D = c - b * b;
+    float t = D > 1e-6 ? clamp((e - b * dd) / D, 0.0, 1.0) : 0.5;
+    float s = max(b * t - dd, 0.0);
+    float rad = R * (0.80 + 0.20 * sin(t * 3.14159));
+    rad = max(rad, s * 0.0045);                       // never thinner than a few pixels
+    float dist = length(s * d - (A + t * v)) - rad;
+    if (sceneDist < s - R * 1.5 - s * 0.03) dist = 100.0;   // hidden behind geometry
+    return vec2(dist, s);
+}
 
 const float TAU = 6.2831853;
 
@@ -292,15 +306,27 @@ void main() {
     vec3 wp = (CamRot * vec4(vp.xyz, 1.0)).xyz;
 
     float edge = 100.0;
-    if (depth < 0.99999) {
-        edge = min(min(bodyDist(wp, Actor0, R, H), bodyDist(wp, Actor1, R, H)),
-                   min(min(bodyDist(wp, Actor2, R, H), bodyDist(wp, Actor3, R, H)),
-                       min(bodyDist(wp, Actor4, R, H), bodyDist(wp, Actor5, R, H))));
-        float n1 = vnoise3(wp * 4.0 + vec3(0.0, 0.0, tq * 1.7));
-        float n2 = vnoise3(wp * 16.0 + vec3(tq * 3.1, 0.0, 0.0));
-        edge += (n1 - 0.5) * distort * 0.35 + (n2 - 0.5) * distort * 0.10;
+    float sceneDist = depth < 0.99999 ? length(wp) : 1e9;
+    vec4 vf = InvProj * vec4(uv2 * 2.0 - 1.0, 0.5, 1.0);
+    vec3 rd = normalize((CamRot * vec4(vf.xyz / vf.w, 1.0)).xyz);
+    vec2 r0 = rayBody(rd, Actor0, R, H, sceneDist), r1 = rayBody(rd, Actor1, R, H, sceneDist);
+    vec2 r2 = rayBody(rd, Actor2, R, H, sceneDist), r3 = rayBody(rd, Actor3, R, H, sceneDist);
+    vec2 r4 = rayBody(rd, Actor4, R, H, sceneDist), r5 = rayBody(rd, Actor5, R, H, sceneDist);
+    vec2 rb = r0;
+    if (r1.x < rb.x) rb = r1;
+    if (r2.x < rb.x) rb = r2;
+    if (r3.x < rb.x) rb = r3;
+    if (r4.x < rb.x) rb = r4;
+    if (r5.x < rb.x) rb = r5;
+    edge = rb.x;
+    float pw = rb.y * 0.0012;
+    if (rb.x < 50.0) {
+        vec3 np = rd * rb.y;
+        float n1 = vnoise3(np * 4.0 + vec3(0.0, 0.0, tq * 1.7));
+        float n2 = vnoise3(np * 16.0 + vec3(tq * 3.1, 0.0, 0.0));
+        edge += ((n1 - 0.5) * distort * 0.35 + (n2 - 0.5) * distort * 0.10) * min(1.0, 8.0 / max(rb.y, 1.0) + 0.2);
     }
-    float mask = 1.0 - smoothstep(-0.015, 0.015, edge);
+    float mask = 1.0 - smoothstep(-0.015 - pw, 0.015 + pw, edge);
 
     vec3 bg = ColBg.rgb, ink = ColInk.rgb, acc = ColAccent.rgb;
     vec3 sceneP = post > 0.5 ? floor(scene * post + 0.5) / post : scene;
