@@ -22,9 +22,9 @@ public class UIImpactClip extends UIClip<ImpactClip>
     public UITrackpad mode, threshold, worldMix, distort, grain, posterize;
     public UITrackpad actorRadius, actorHeight, aura, auraWidth;
     public UITrackpad starCount, starSize, starSeed, starRate;
-    public UITrackpad speedLines, shockwave, inkBurst, flash, centerX, centerY;
+    public UITrackpad charMode, speedLines, shockwave, inkBurst, flash, centerX, centerY;
     public UITrackpad shape, shapeScale, shapeSpeed, shapeDensity, shapeGlow, shapeRot, shapeFill;
-    public UIColor bg, ink, accent, starColor, shapeCol1, shapeCol2;
+    public UIColor inkAlt, bg, ink, accent, starColor, shapeCol1, shapeCol2;
 
     public UIImpactClip(ImpactClip clip, IUIClipsDelegate editor)
     {
@@ -95,6 +95,8 @@ public class UIImpactClip extends UIClip<ImpactClip>
 
         this.bg = this.color(c.bg);
         this.ink = this.color(c.ink);
+        this.inkAlt = this.color(c.inkAlt);
+        this.charMode = this.f(c.charMode, "Char mode (0 fixed,1 auto,2 invert)", 0, 2);
         this.accent = this.color(c.accent);
         this.starColor = this.color(c.starColor);
         this.shapeCol1 = this.color(c.shapeCol1);
@@ -112,7 +114,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
         this.panels.add(this.section(IKey.raw("Shape color 1 (streaks / ink)"), this.shapeCol1));
         this.panels.add(this.section(IKey.raw("Shape color 2 (glow / paper)"), this.shapeCol2));
         this.panels.add(this.section(IKey.raw("Background color"), this.bg));
-        this.panels.add(this.section(IKey.raw("Character (ink) color"), this.ink));
+        this.panels.add(this.section(IKey.raw("Character color (mode / main / contrast color)"), this.charMode, this.ink, this.inkAlt));
         this.panels.add(this.section(IKey.raw("Accent color (lines, aura, shockwave)"), this.accent));
         this.panels.add(this.section(IKey.raw("Stars color"), this.starColor));
         this.panels.add(this.section(IKey.raw("Characters"), this.actorRadius, this.actorHeight, this.aura, this.auraWidth));
