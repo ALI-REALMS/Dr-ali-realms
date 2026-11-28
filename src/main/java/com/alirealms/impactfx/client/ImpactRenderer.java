@@ -53,6 +53,11 @@ public final class ImpactRenderer
     {
       FilmEvents.RENDER_AFTER.register((controller, context) ->
 {
+    if (Compat.shadow())
+    {
+        return;
+    }
+
     pending = controller != null
         && controller.film != null
         && controller.film.camera != null

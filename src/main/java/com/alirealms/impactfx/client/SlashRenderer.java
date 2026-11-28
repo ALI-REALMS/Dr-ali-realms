@@ -32,7 +32,13 @@ public final class SlashRenderer
 
     public static void init()
     {
-        FilmEvents.RENDER_AFTER.register(SlashRenderer::render);
+        FilmEvents.RENDER_AFTER.register((controller, context) ->
+        {
+            if (!Compat.shadow())
+            {
+                render(controller, context);
+            }
+        });
     }
 
     private static float ease(float x)
