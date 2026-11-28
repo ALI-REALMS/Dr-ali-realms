@@ -65,10 +65,23 @@ final class Gfx
 
     static void initLate()
     {
-        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.LAST.register((context) -> flushLate());
+        /* shader pack: queued geometry is drawn from the InGameHud mixin (see ImpactRenderer.renderHud), after the
+           pack's final pass; drop whatever is left over from a frame that never reached it */
+        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.START.register((context) ->
+        {
+            queue.clear();
+            queued = 0;
+        });
+        net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents.LAST.register((context) ->
+        {
+            if (!Compat.iris())
+            {
+                flushLate(null);
+            }
+        });
     }
 
-    static void flushLate()
+    static void flushLate(net.minecraft.client.gl.Framebuffer target)
     {
         if (queue.isEmpty())
         {
@@ -79,6 +92,11 @@ final class Gfx
 
         if (p != null)
         {
+            if (target != null)
+            {
+                target.beginWrite(false);
+            }
+
             RenderSystem.setShader(() -> p);
 
             GlUniform u = p.getUniform("Proj");
@@ -113,6 +131,11 @@ final class Gfx
             RenderSystem.enableCull();
             RenderSystem.defaultBlendFunc();
             RenderSystem.depthMask(true);
+
+            if (target != null)
+            {
+                MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
+            }
         }
 
         queue.clear();
