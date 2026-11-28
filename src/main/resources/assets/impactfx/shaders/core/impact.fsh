@@ -74,6 +74,14 @@ vec2 rayBody(vec3 d, vec4 act, float R, float H, float sceneDist, float band) {
     return vec2(dist, s);
 }
 
+// distance from a surface point to the character cylinder (ground excluded) - used by the "real character" mode
+float cylDist(vec3 wp, vec4 act, float Rc, float H) {
+    if (act.w < 0.5) return 100.0;
+    float dh = length(wp.xz - act.xz) - Rc;
+    float dy = max(act.y + 0.03 - wp.y, wp.y - (act.y + H + 0.08));
+    return max(dh, dy);
+}
+
 const float TAU = 6.2831853;
 
 vec2 rot2(vec2 v, float a) {
@@ -324,6 +332,17 @@ void main() {
     if (r5.x < rb.x) rb = r5;
     edge = rb.x;
     float pw = rb.y * 0.0012;
+    if (cm == 3) {
+        edge = 100.0;
+        pw = 0.0;
+        if (depth < 0.99999) {
+            float Rc = R * 1.6 + sceneDist * 0.004;
+            edge = min(min(cylDist(wp, Actor0, Rc, H), cylDist(wp, Actor1, Rc, H)),
+                       min(min(cylDist(wp, Actor2, Rc, H), cylDist(wp, Actor3, Rc, H)),
+                           min(cylDist(wp, Actor4, Rc, H), cylDist(wp, Actor5, Rc, H))));
+            pw = sceneDist * 0.0006;
+        }
+    }
     if (rb.x < 50.0 && cm != 3) {
         vec3 np = rd * rb.y;
         float n1 = vnoise3(np * 4.0 + vec3(0.0, 0.0, tq * 1.7));
@@ -390,7 +409,12 @@ void main() {
     float wl = dot(world, vec3(0.299, 0.587, 0.114));
     if (cm == 1) charCol = wl > 0.5 ? ink : ColInk2.rgb;
     else if (cm == 2) charCol = vec3(1.0) - world;
-    else if (cm == 3) charCol = vec3(1.0) - scene;
+    else if (cm == 3) {
+        float Ln = clamp((dot(scene, vec3(0.299, 0.587, 0.114)) - 0.05) / 0.85, 0.0, 1.0);
+        vec3 onDark = ColInk2.rgb * mix(0.35, 1.0, Ln);
+        vec3 onBright = mix(ColInk.rgb, vec3(0.7), 1.0 - Ln);
+        charCol = mix(onDark, onBright, smoothstep(0.35, 0.65, wl));
+    }
     vec3 actor = clamp(charCol + gr, 0.0, 1.0);
     vec3 col = mix(world, actor, mask);
 
