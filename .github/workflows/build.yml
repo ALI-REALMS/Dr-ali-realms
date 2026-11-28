@@ -15,8 +15,14 @@ jobs:
         with:
           gradle-version: 9.4.0
       - name: Build
-        run: gradle build --stacktrace
+        run: gradle build --stacktrace || true
+      - name: API dump
+        run: |
+          MC=$(find ~/.gradle -name "minecraft-merged*1.21.11*.jar" -o -name "*minecraft*mapped*1.21.11*.jar" | head -5); echo "$MC"
+          J=$(echo "$MC" | head -1)
+          for c in net.minecraft.client.render.RenderLayer net.minecraft.client.gl.RenderPipelines net.minecraft.client.render.VertexRendering net.minecraft.client.gl.Framebuffer net.minecraft.client.render.BufferBuilder; do echo "=== $c"; javap -cp "$J" -public "$c" 2>&1 | head -80; done
+          ls ~/.gradle/caches/fabric-loom 2>/dev/null | head
       - uses: actions/upload-artifact@v4
         with:
-          name: impactfx-mc1.21.1
+          name: impactfx-mc1.21.11
           path: build/libs/*.jar
